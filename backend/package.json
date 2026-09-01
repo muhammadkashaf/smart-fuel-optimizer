@@ -1,0 +1,21 @@
+{
+  "name": "smart-fuel-optimization-backend",
+  "version": "1.0.0",
+  "description": "Node.js + Express + MongoDB backend for Smart Fuel Optimization prototype",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
