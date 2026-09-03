@@ -64,9 +64,9 @@ export default function AppLayout() {
             <Layers className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <span className="block text-base font-bold tracking-tight text-white">Fleetline</span>
+            <span className="block text-base font-bold tracking-tight text-white">Smart Fuel</span>
             <span className="text-[11px] font-medium tracking-wide text-slate-400">
-              Fleet Operations
+              Fuel & Vehicle Management
             </span>
           </div>
         </div>
@@ -163,4 +163,3 @@ export default function AppLayout() {
     </div>
   );
 }
-

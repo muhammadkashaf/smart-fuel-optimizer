@@ -12,8 +12,8 @@ export default function IndividualRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  if (user?.role === 'Admin') {
-    return <Navigate to="/admin/users" replace />;
+  if (user?.role !== 'Individual') {
+    return <Navigate to={user?.role === 'Admin' ? '/admin/users' : '/login'} replace />;
   }
 
   return <Outlet />;

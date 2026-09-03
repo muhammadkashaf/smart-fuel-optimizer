@@ -1,6 +1,10 @@
 import { createContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { logoutRequest } from '@/api/authApi';
 import type { User } from '@/types';
+
+const TOKEN_KEY = 'smart_fuel_token';
+const USER_KEY = 'smart_fuel_user';
+
 type AuthValue = {
   user: User | null;
   token: string | null;
@@ -9,13 +13,16 @@ type AuthValue = {
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
 };
+
 export const AuthContext = createContext<AuthValue | null>(null);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+
   useEffect(() => {
-    const t = localStorage.getItem('fleet_token');
-    const u = localStorage.getItem('fleet_user');
+    const t = localStorage.getItem(TOKEN_KEY);
+    const u = localStorage.getItem(USER_KEY);
     if (t && u) {
       try {
         setToken(t);
@@ -25,24 +32,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
   }, []);
+
   const login = (nextToken: string, nextUser: User) => {
-    localStorage.setItem('fleet_token', nextToken);
-    localStorage.setItem('fleet_user', JSON.stringify(nextUser));
+    localStorage.setItem(TOKEN_KEY, nextToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
     setToken(nextToken);
     setUser(nextUser);
   };
+
   const updateUser = (nextUser: User) => {
-    localStorage.setItem('fleet_user', JSON.stringify(nextUser));
+    localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
     setUser(nextUser);
   };
+
   const logout = async () => {
     try {
       await logoutRequest();
     } catch {
-      /* token is cleared client-side regardless */
     } finally {
-      localStorage.removeItem('fleet_token');
-      localStorage.removeItem('fleet_user');
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
       setToken(null);
       setUser(null);
     }

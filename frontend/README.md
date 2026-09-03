@@ -1,6 +1,6 @@
-# Fleetline frontend
+# Smart Fuel Optimization and Resource Management System frontend
 
-React + Vite client for the Fleetline vehicle-management API.
+React + Vite client for the Smart Fuel Optimization and Resource Management System API.
 
 ## Setup
 

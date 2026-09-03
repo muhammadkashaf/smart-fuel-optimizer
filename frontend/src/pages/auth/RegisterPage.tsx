@@ -27,7 +27,7 @@ export default function RegisterPage() {
       login(data.token, data.user);
       reset();
       toast.success(data.message);
-      navigate('/dashboard');
+      navigate(data.user.role === 'Admin' ? '/admin/users' : '/dashboard');
     } catch (e) {
       toast.error(getErrorMessage(e));
     }
@@ -62,7 +62,7 @@ export default function RegisterPage() {
 
         <Select label="Account role" error={errors.role?.message as string} {...register('role')}>
           <option value="Individual">Individual (Owner / Driver)</option>
-          <option value="Admin">Fleet Administrator</option>
+          <option value="Admin">Admin (Administrator)</option>
         </Select>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -100,4 +100,3 @@ export default function RegisterPage() {
     </AuthFrame>
   );
 }
-

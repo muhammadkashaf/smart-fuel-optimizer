@@ -24,8 +24,8 @@ export default function AuthFrame({
             <Layers className="h-5 w-5" />
           </div>
           <div>
-            <span className="block text-lg font-bold tracking-tight text-white">Fleetline</span>
-            <span className="text-xs text-slate-400 font-medium">Enterprise Fleet Intelligence</span>
+            <span className="block text-lg font-bold tracking-tight text-white">Smart Fuel</span>
+            <span className="text-xs text-slate-400 font-medium">Optimization & Resource Management</span>
           </div>
         </div>
 
@@ -33,7 +33,7 @@ export default function AuthFrame({
         <div className="relative z-10 max-w-lg space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-blue-400">
             <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-            Next-Gen Fleet Management
+            Smart Fuel Resource Management
           </div>
 
           <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
@@ -68,7 +68,7 @@ export default function AuthFrame({
 
         {/* Footer */}
         <div className="relative z-10 flex items-center justify-between text-xs text-slate-400">
-          <p>© {new Date().getFullYear()} Fleetline Inc. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Smart Fuel System. All rights reserved.</p>
           <span className="font-mono">v2.4.0</span>
         </div>
       </section>
@@ -83,7 +83,7 @@ export default function AuthFrame({
                 <div className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-white">
                   <Layers className="h-4 w-4" />
                 </div>
-                <span className="text-base font-bold text-slate-900">Fleetline</span>
+                <span className="text-base font-bold text-slate-900">Smart Fuel</span>
               </div>
 
               <h2 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
@@ -96,4 +96,3 @@ export default function AuthFrame({
     </main>
   );
 }
-

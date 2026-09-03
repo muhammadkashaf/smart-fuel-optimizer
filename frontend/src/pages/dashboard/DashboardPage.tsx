@@ -45,7 +45,7 @@ export default function DashboardPage() {
       {/* Page Header */}
       <PageHeader
         title={`Welcome back, ${user?.fullName?.split(' ')[0] || 'Fleet Manager'}`}
-        subtitle={`Fleet operations overview · ${user?.role || 'Member'} workspace`}
+        subtitle={`Fuel and vehicle overview · ${user?.role || 'Member'} workspace`}
         action={
           <Link to="/vehicles/new">
             <Button>
@@ -183,4 +183,3 @@ function MetricCard({
     </div>
   );
 }
-

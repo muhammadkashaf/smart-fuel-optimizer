@@ -11,8 +11,12 @@ export const register = async (req, res, next) => {
   try {
     const { fullName, email, contactNumber, role, password } = req.body;
 
-    if (!fullName || !email || !contactNumber || !password) {
+    if (!fullName || !email || !contactNumber || !role || !password) {
       return res.status(400).json({ message: "Please complete all required fields" });
+    }
+
+    if (!["Individual", "Admin"].includes(role)) {
+      return res.status(400).json({ message: "Role must be either Individual or Admin" });
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
@@ -36,7 +40,7 @@ export const register = async (req, res, next) => {
       fullName: String(fullName).trim(),
       email: normalizedEmail,
       contactNumber,
-      role: role || "Individual",
+      role,
       password: hashedPassword,
     });
 

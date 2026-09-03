@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["Individual", "Admin"],
-      default: "Individual",
+      required: true,
     },
     password: {
       type: String,
