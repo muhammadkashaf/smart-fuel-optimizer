@@ -4,18 +4,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ShieldCheck,
   User as UserIcon,
-  Lock,
   Mail,
   Phone,
   Calendar,
   Pencil,
-  KeyRound,
-  CheckCircle2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getProfile, updateProfile } from '@/api/profileApi';
 import { useAuth } from '@/hooks/useAuth';
-import { passwordSchema, profileSchema } from '@/schemas/profileSchemas';
+import { profileSchema } from '@/schemas/profileSchemas';
 import {
   Button,
   ErrorState,
@@ -38,25 +35,12 @@ function formatMemberSince(dateStr?: string): string | null {
   }
 }
 
-/** Format a date string as "Last updated on Mon DD, YYYY" */
-function formatLastUpdated(dateStr?: string): string | null {
-  if (!dateStr) return null;
-  try {
-    const date = new Date(dateStr);
-    return `Last updated on ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  } catch {
-    return null;
-  }
-}
-
 export default function ProfilePage() {
   const { updateUser } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
   const [error, setError] = useState('');
 
-  // Toggle states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isEditingPassword, setIsEditingPassword] = useState(false);
 
   // ----- Profile form (fullName + contactNumber only — email is read-only) -----
   const profileForm = useForm({
@@ -73,27 +57,6 @@ export default function ProfilePage() {
     handleSubmit: profileHandleSubmit,
     reset: profileReset,
   } = profileForm;
-
-  // ----- Password form -----
-  const passwordForm = useForm({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      password: '',
-      confirmPassword: '',
-    },
-  });
-
-  const {
-    formState: {
-      isDirty: pwDirty,
-      isValid: pwValid,
-      isSubmitting: pwSubmitting,
-      errors: pwErrors,
-    },
-    register: pwRegister,
-    handleSubmit: pwHandleSubmit,
-    reset: pwReset,
-  } = passwordForm;
 
   useEffect(() => {
     getProfile()
@@ -149,42 +112,7 @@ export default function ProfilePage() {
     }
   };
 
-  // Start editing password
-  const startEditingPassword = () => {
-    pwReset({
-      password: '',
-      confirmPassword: '',
-    });
-    setIsEditingPassword(true);
-  };
-
-  // Cancel editing password
-  const cancelEditingPassword = () => {
-    pwReset({
-      password: '',
-      confirmPassword: '',
-    });
-    setIsEditingPassword(false);
-  };
-
-  // Save password — completely independent from profile save
-  const savePassword = async (values: { password: string }) => {
-    try {
-      const { data } = await updateProfile({ password: values.password });
-      pwReset({
-        password: '',
-        confirmPassword: '',
-      });
-      setIsEditingPassword(false);
-      toast.success(data.message || 'Password changed successfully');
-    } catch (e) {
-      toast.error(getErrorMessage(e));
-      // Keep expanded so user can resolve issue
-    }
-  };
-
   const memberSince = formatMemberSince(profile.createdAt);
-  const passwordLastUpdated = formatLastUpdated(profile.updatedAt);
 
   return (
     <div className="space-y-6">
@@ -351,100 +279,6 @@ export default function ProfilePage() {
             )}
           </section>
 
-          {/* ========================================================================= */}
-          {/* 2. SECURITY & CREDENTIALS SECTION */}
-          {/* ========================================================================= */}
-          <section className="app-panel p-5 sm:p-7">
-            <div className="flex items-center justify-between border-b border-line pb-4">
-              <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-slate-700">
-                  <Lock className="h-4 w-4" />
-                </div>
-                <div>
-                  <h2 className="text-base font-semibold text-slate-900">Security &amp; credentials</h2>
-                  <p className="text-xs text-content-muted">
-                    {isEditingPassword
-                      ? 'Create a strong, secure new password'
-                      : 'Password protection and authentication settings'}
-                  </p>
-                </div>
-              </div>
-
-              {!isEditingPassword && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={startEditingPassword}
-                  aria-label="Change account password"
-                >
-                  <KeyRound className="h-3.5 w-3.5" />
-                  <span>Change password</span>
-                </Button>
-              )}
-            </div>
-
-            {!isEditingPassword ? (
-              /* COLLAPSED / READ-ONLY STATE */
-              <div className="mt-5 flex items-center justify-between rounded-lg border border-line/70 bg-slate-50/60 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-8 w-8 place-items-center rounded-full bg-emerald-50 text-emerald-600">
-                    <CheckCircle2 className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">Account password is set</p>
-                    <p className="text-xs text-content-muted mt-0.5">
-                      {passwordLastUpdated ? passwordLastUpdated : 'Your account is secured with a password'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* EXPANDED EDIT MODE STATE */
-              <form onSubmit={pwHandleSubmit(savePassword)} className="mt-5 space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    label="New password"
-                    type="password"
-                    placeholder="Enter new password"
-                    autoComplete="new-password"
-                    hint="Minimum 8 characters with numbers"
-                    error={pwErrors.password?.message}
-                    {...pwRegister('password')}
-                  />
-                  <Input
-                    label="Confirm new password"
-                    type="password"
-                    placeholder="Re-enter new password"
-                    autoComplete="new-password"
-                    hint="Must match the password above"
-                    error={pwErrors.confirmPassword?.message}
-                    {...pwRegister('confirmPassword')}
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="md"
-                    onClick={cancelEditingPassword}
-                    disabled={pwSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="md"
-                    disabled={pwSubmitting || !pwDirty || !pwValid}
-                  >
-                    {pwSubmitting && <Spinner />}
-                    <span>Update password</span>
-                  </Button>
-                </div>
-              </form>
-            )}
-          </section>
         </div>
       </div>
     </div>

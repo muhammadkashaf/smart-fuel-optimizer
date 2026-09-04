@@ -264,7 +264,7 @@ export const updateAdminVehicle = async (req, res, next) => {
     const updated = await Vehicle.findById(vehicle._id).populate("userId", "fullName email role");
 
     res.json({
-      message: "Vehicle updated successfully by administrator",
+      message: "Vehicle updated successfully",
       vehicle: updated,
     });
   } catch (error) {
@@ -281,7 +281,7 @@ export const deleteAdminVehicle = async (req, res, next) => {
     }
 
     await vehicle.deleteOne();
-    res.json({ message: "Vehicle record removed successfully by administrator" });
+    res.json({ message: "Vehicle removed successfully" });
   } catch (error) {
     next(error);
   }
