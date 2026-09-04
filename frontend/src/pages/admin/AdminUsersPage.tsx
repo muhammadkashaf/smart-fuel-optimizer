@@ -32,10 +32,12 @@ import {
 } from '@/components/common';
 import VehicleBadge from '@/components/vehicles/VehicleBadge';
 import { adminUserEditSchema, type AdminUserEditFormData } from '@/schemas/adminSchemas';
+import { useAuth } from '@/hooks/useAuth';
 import { getErrorMessage } from '@/utils/errorHandler';
 import type { User, Vehicle } from '@/types';
 
 export default function AdminUsersPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -46,6 +48,10 @@ export default function AdminUsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  const currentUserId = currentUser?.id || currentUser?._id;
+  const isCurrentUser = (user: User) =>
+    Boolean(currentUserId && String(user.id || user._id) === String(currentUserId));
 
 
   // Edit Form Hook
@@ -244,7 +250,14 @@ export default function AdminUsersPage() {
                           {u.fullName?.slice(0, 1).toUpperCase() || 'U'}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-semibold text-slate-900 truncate">{u.fullName}</div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-slate-900 truncate">{u.fullName}</span>
+                            {isCurrentUser(u) && (
+                              <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                                Current account
+                              </span>
+                            )}
+                          </div>
                           <div className="text-xs text-content-muted truncate">{u.email}</div>
                         </div>
                       </div>
@@ -286,22 +299,26 @@ export default function AdminUsersPage() {
                         >
                           <Info className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          onClick={() => openEditModal(u)}
-                          aria-label={`Edit ${u.fullName}`}
-                          className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                          title="Edit user details"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDeletingUser(u)}
-                          aria-label={`Delete ${u.fullName}`}
-                          className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-danger transition-colors"
-                          title="Delete user account"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {!isCurrentUser(u) && (
+                          <>
+                            <button
+                              onClick={() => openEditModal(u)}
+                              aria-label={`Edit ${u.fullName}`}
+                              className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                              title="Edit user details"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeletingUser(u)}
+                              aria-label={`Delete ${u.fullName}`}
+                              className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-danger transition-colors"
+                              title="Delete user account"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

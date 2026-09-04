@@ -99,6 +99,10 @@ export const getUserById = async (req, res, next) => {
 // PUT /api/admin/users/:id
 export const updateUser = async (req, res, next) => {
   try {
+    if (String(req.params.id) === String(req.user._id)) {
+      return res.status(400).json({ message: "Use your profile page to update your own account" });
+    }
+
     const { fullName, email, contactNumber, role } = req.body;
     const user = await User.findById(req.params.id);
 
