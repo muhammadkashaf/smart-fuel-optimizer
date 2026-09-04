@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
   if (status === 'loading') return <PageSkeleton />;
   if (status === 'error')
-    return <ErrorState message="We couldn't load your fleet dashboard data." retry={load} />;
+    return <ErrorState message="We couldn't load your vehicle dashboard data." retry={load} />;
 
   const petrolCount = vehicles.filter((v) => v.fuelType === 'Petrol').length;
   const altFuelCount = vehicles.filter((v) => v.fuelType !== 'Petrol').length;
@@ -44,7 +44,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Page Header */}
       <PageHeader
-        title={`Welcome back, ${user?.fullName?.split(' ')[0] || 'Fleet Manager'}`}
+        title={`Welcome back, ${user?.fullName?.split(' ')[0] || 'User'}`}
         subtitle={`Fuel and vehicle overview · ${user?.role || 'Member'} workspace`}
         action={
           <Link to="/vehicles/new">
@@ -59,7 +59,7 @@ export default function DashboardPage() {
       {/* KPI Metric Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <MetricCard
-          label="Total fleet size"
+          label="Total vehicles"
           value={vehicles.length}
           subtext="Active vehicles registered"
           icon={<CarFront className="h-5 w-5 text-accent" />}
@@ -68,7 +68,7 @@ export default function DashboardPage() {
         <MetricCard
           label="Petrol engines"
           value={petrolCount}
-          subtext={`${vehicles.length > 0 ? Math.round((petrolCount / vehicles.length) * 100) : 0}% of fleet composition`}
+          subtext={`${vehicles.length > 0 ? Math.round((petrolCount / vehicles.length) * 100) : 0}% of registered vehicles`}
           icon={<Fuel className="h-5 w-5 text-amber-600" />}
           iconBg="bg-amber-50 text-amber-600"
         />
@@ -87,7 +87,7 @@ export default function DashboardPage() {
           <div>
             <h2 className="text-base font-semibold text-slate-900">Recent vehicle records</h2>
             <p className="mt-0.5 text-xs text-content-muted">
-              Latest additions to your fleet repository
+              Latest additions to your vehicle records
             </p>
           </div>
           {vehicles.length > 0 && (
@@ -137,7 +137,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <EmptyState
-              title="No vehicles in fleet"
+              title="No vehicles registered"
               description="Your workspace is ready. Add your first vehicle to start tracking fuel efficiency and specs."
               action={
                 <Link to="/vehicles/new">

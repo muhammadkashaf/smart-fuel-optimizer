@@ -384,12 +384,12 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
-            {/* User's Vehicle Fleet */}
+            {/* User's vehicles */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                   <CarFront className="h-4 w-4 text-slate-500" />
-                  <span>Owned Vehicle Fleet ({viewingUser.vehicles.length})</span>
+                  <span>Owned Vehicles ({viewingUser.vehicles.length})</span>
                 </h3>
               </div>
 

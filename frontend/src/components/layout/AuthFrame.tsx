@@ -41,7 +41,7 @@ export default function AuthFrame({
           </h1>
 
           <p className="text-base leading-relaxed text-slate-400">
-            Streamline fuel optimization, monitor consumption metrics, and empower your fleet managers with real-time operational insights.
+            Streamline fuel optimization, monitor consumption metrics, and manage vehicle resources with clear operational insights.
           </p>
 
           <div className="space-y-3.5 pt-4">
@@ -55,7 +55,7 @@ export default function AuthFrame({
               <div className="grid h-7 w-7 place-items-center rounded-md bg-white/10 text-accent">
                 <ShieldCheck className="h-4 w-4" />
               </div>
-              <span>Role-based access for administrators & fleet managers</span>
+              <span>Role-based access for administrators &amp; individual users</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-300">
               <div className="grid h-7 w-7 place-items-center rounded-md bg-white/10 text-accent">

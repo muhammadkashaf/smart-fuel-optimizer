@@ -32,7 +32,7 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthFrame title="Sign in to your account" text="Welcome back. Enter your credentials to access your fleet.">
+    <AuthFrame title="Sign in to your account" text="Welcome back. Enter your credentials to access your vehicle records.">
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
         <Input
           label="Email address"
@@ -68,4 +68,3 @@ export default function LoginPage() {
     </AuthFrame>
   );
 }
-

@@ -253,7 +253,7 @@ export default function AdminPage() {
       {/* Page Header */}
       <PageHeader
         title="Admin Management Portal"
-        subtitle="Manage system-wide user accounts, role permissions, and registered fleet assets."
+        subtitle="Manage system-wide user accounts, role permissions, and registered vehicles."
       />
 
       {/* KPI Overview Metrics */}
@@ -276,7 +276,7 @@ export default function AdminPage() {
         <div className="app-panel p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Total Fleet
+              Total Vehicles
             </span>
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-50 text-emerald-600">
               <CarFront className="h-4 w-4" />
@@ -472,7 +472,7 @@ export default function AdminPage() {
                               onClick={() => handleViewUser(u.id || u._id || '')}
                               aria-label={`View details for ${u.fullName}`}
                               className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                              title="View user & fleet records"
+                              title="View user & vehicle records"
                             >
                               <Info className="h-3.5 w-3.5" />
                             </button>
@@ -871,7 +871,7 @@ export default function AdminPage() {
                 disabled={userActionLoading}
               >
                 {userActionLoading && <Spinner />}
-                <span>Delete user & fleet</span>
+                <span>Delete user & vehicles</span>
               </Button>
             </div>
           </div>

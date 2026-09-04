@@ -150,7 +150,7 @@ export default function AdminVehiclesPage() {
       {/* Header */}
       <PageHeader
         title="Manage Vehicles"
-        subtitle="System-wide fleet directory. Monitor, edit, and clean up vehicle records across all user accounts."
+        subtitle="System-wide vehicle directory. Monitor, edit, and remove vehicle records across all user accounts."
       />
 
       {/* Search & Fuel Filter Toolbar */}
@@ -355,7 +355,7 @@ export default function AdminVehiclesPage() {
           <div className="w-full max-w-lg rounded-2xl border border-line bg-surface p-6 shadow-overlay sm:p-7 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-line pb-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Edit Fleet Asset</h2>
+                <h2 className="text-lg font-bold text-slate-900">Edit Vehicle Record</h2>
                 <p className="text-xs text-content-muted mt-0.5">
                   Owner:{' '}
                   {typeof editingVehicle.userId === 'object'

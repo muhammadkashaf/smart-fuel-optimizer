@@ -31,7 +31,7 @@ export default function AddVehiclePage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader
         title="Add new vehicle"
-        subtitle="Register a new fleet asset with its operating and fuel parameters."
+        subtitle="Register a new vehicle with its operating and fuel information."
       />
       <div>
         <VehicleForm onSubmit={submit} />
@@ -39,4 +39,3 @@ export default function AddVehiclePage() {
     </div>
   );
 }
-

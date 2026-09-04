@@ -58,7 +58,7 @@ export default function VehicleForm({
           <Input
             label="Vehicle name"
             placeholder="e.g. Delivery Van Alpha"
-            hint="A recognizable name or fleet callsign"
+            hint="A recognizable name or vehicle nickname"
             error={errors.vehicleName?.message}
             {...register('vehicleName')}
           />
@@ -148,4 +148,3 @@ export default function VehicleForm({
     </form>
   );
 }
-

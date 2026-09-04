@@ -70,14 +70,14 @@ export default function VehicleListPage() {
 
   if (status === 'loading') return <PageSkeleton />;
   if (status === 'error')
-    return <ErrorState message="We couldn't load your fleet vehicles." retry={load} />;
+    return <ErrorState message="We couldn't load your vehicles." retry={load} />;
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <PageHeader
         title="Vehicles"
-        subtitle="Manage and monitor your entire fleet directory."
+        subtitle="Manage and monitor all your registered vehicles."
         action={
           <Link to="/vehicles/new">
             <Button>
@@ -91,7 +91,7 @@ export default function VehicleListPage() {
       {vehicles.length === 0 ? (
         <EmptyState
           title="No vehicles registered"
-          description="Your fleet inventory is currently empty. Add your first vehicle to begin tracking performance and consumption."
+          description="You have no registered vehicles. Add your first vehicle to begin tracking performance and consumption."
           action={
             <Link to="/vehicles/new">
               <Button>
@@ -314,4 +314,3 @@ export default function VehicleListPage() {
     </div>
   );
 }
-

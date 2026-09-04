@@ -34,7 +34,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthFrame title="Create your account" text="Start monitoring and organizing your fleet today.">
+    <AuthFrame title="Create your account" text="Start monitoring and organizing your vehicles today.">
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Input

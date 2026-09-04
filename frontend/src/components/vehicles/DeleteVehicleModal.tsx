@@ -38,7 +38,7 @@ export default function DeleteVehicleModal({
               Delete vehicle record
             </h2>
             <p className="mt-1.5 text-sm leading-relaxed text-content-muted">
-              Are you sure you want to permanently remove this vehicle from your fleet? This action cannot be undone.
+              Are you sure you want to permanently remove this vehicle record? This action cannot be undone.
             </p>
           </div>
         </div>
@@ -56,4 +56,3 @@ export default function DeleteVehicleModal({
     </div>
   );
 }
-

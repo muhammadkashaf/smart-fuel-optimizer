@@ -45,7 +45,7 @@ export default function EditVehiclePage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader
         title={`Edit ${vehicle.vehicleName}`}
-        subtitle={`Updating fleet asset record · Registration: ${vehicle.registrationNumber}`}
+        subtitle={`Updating vehicle record · Registration: ${vehicle.registrationNumber}`}
       />
       <div>
         <VehicleForm vehicle={vehicle} onSubmit={submit} />
@@ -53,4 +53,3 @@ export default function EditVehiclePage() {
     </div>
   );
 }
-
