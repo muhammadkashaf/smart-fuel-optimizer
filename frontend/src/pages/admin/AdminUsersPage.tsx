@@ -515,7 +515,7 @@ export default function AdminUsersPage() {
                 disabled={actionLoading}
               >
                 {actionLoading && <Spinner />}
-                <span>Delete user & fleet</span>
+                <span>Delete user</span>
               </Button>
             </div>
           </div>
