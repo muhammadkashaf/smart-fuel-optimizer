@@ -18,8 +18,21 @@ export const Input = ({
     {hint && <p className="field-hint mb-1.5">{hint}</p>}
     <div className="relative mt-1.5">
       <input
-        className={`field-control ${error ? '!border-danger focus:!border-danger focus:!ring-danger/15' : ''} ${className}`}
+        className={`field-control ${props.type === 'date' ? 'cursor-pointer' : ''} ${error ? '!border-danger focus:!border-danger focus:!ring-danger/15' : ''} ${className}`}
         {...props}
+        onClick={
+          props.type === 'date'
+            ? (event) => {
+                props.onClick?.(event);
+                if (event.defaultPrevented || event.currentTarget.disabled || event.currentTarget.readOnly) return;
+                try {
+                  event.currentTarget.showPicker?.();
+                } catch {
+                  // The native calendar icon remains available if showPicker is unsupported.
+                }
+              }
+            : props.onClick
+        }
       />
     </div>
     {error && (

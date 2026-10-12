@@ -190,7 +190,7 @@ export default function AdminVehiclesPage() {
               aria-label="Filter by fuel type"
               value={fuelFilter}
               onChange={(e) => setFuelFilter(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-line bg-slate-50/50 pl-9 pr-9 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-accent focus:bg-white focus:ring-3 focus:ring-accent/15"
+              className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-line bg-slate-50/50 pl-9 pr-9 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-accent focus:bg-white focus:ring-3 focus:ring-accent/15"
             >
               {FUEL_TYPES.map((type) => (
                 <option key={type} value={type}>

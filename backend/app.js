@@ -2,6 +2,7 @@ import express from "express";
 
 import authRoutes from "./routes/authRoutes.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
+import fuelRecordRoutes from "./routes/fuelRecordRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 
@@ -38,6 +39,7 @@ app.get("/", (req, res) => {
 
 app.use("/api", authRoutes);
 app.use("/api", vehicleRoutes);
+app.use("/api", fuelRecordRoutes);
 app.use("/api", adminRoutes);
 
 app.use(notFound);

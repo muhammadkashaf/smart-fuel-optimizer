@@ -472,6 +472,7 @@ export default function AdminUsersPage() {
                 {...register('role')}
               >
                 <option value="Individual">Individual (Standard User)</option>
+                <option value="Organizational">Organizational</option>
                 <option value="Admin">Administrator</option>
               </Select>
 

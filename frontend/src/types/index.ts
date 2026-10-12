@@ -4,7 +4,7 @@ export type User = {
   fullName: string;
   email: string;
   contactNumber: string;
-  role: 'Individual' | 'Admin';
+  role: 'Individual' | 'Organizational' | 'Admin';
   createdAt?: string;
   updatedAt?: string;
   vehicleCount?: number;
@@ -27,10 +27,21 @@ export type Vehicle = {
         fullName: string;
         email: string;
         contactNumber?: string;
-        role?: 'Individual' | 'Admin';
+        role?: 'Individual' | 'Organizational' | 'Admin';
       };
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type FuelRecord = {
+  _id: string;
+  userId: string;
+  vehicleId: string | Pick<Vehicle, '_id' | 'vehicleName' | 'registrationNumber'>;
+  date: string;
+  quantity: number;
+  cost: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type AdminStats = {

@@ -21,7 +21,7 @@ export const Select = ({
     {hint && <p className="field-hint mb-1.5">{hint}</p>}
     <div className="relative mt-1.5">
       <select
-        className={`field-control appearance-none pr-9 ${error ? '!border-danger focus:!border-danger focus:!ring-danger/15' : ''} ${className}`}
+        className={`field-control cursor-pointer appearance-none pr-9 disabled:cursor-not-allowed ${error ? '!border-danger focus:!border-danger focus:!ring-danger/15' : ''} ${className}`}
         {...props}
       >
         {children}

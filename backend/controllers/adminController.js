@@ -142,8 +142,8 @@ export const updateUser = async (req, res, next) => {
     }
 
     if (role !== undefined) {
-      if (!["Individual", "Admin"].includes(role)) {
-        return res.status(400).json({ message: "Role must be either Individual or Admin" });
+      if (!["Individual", "Organizational", "Admin"].includes(role)) {
+        return res.status(400).json({ message: "Role must be Individual, Organizational, or Admin" });
       }
       user.role = role;
     }

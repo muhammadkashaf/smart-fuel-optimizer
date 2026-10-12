@@ -15,8 +15,8 @@ export const register = async (req, res, next) => {
       return res.status(400).json({ message: "Please complete all required fields" });
     }
 
-    if (!["Individual", "Admin"].includes(role)) {
-      return res.status(400).json({ message: "Role must be either Individual or Admin" });
+    if (!["Individual", "Organizational", "Admin"].includes(role)) {
+      return res.status(400).json({ message: "Role must be Individual, Organizational, or Admin" });
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();

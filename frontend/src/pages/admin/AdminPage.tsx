@@ -546,7 +546,7 @@ export default function AdminPage() {
                   aria-label="Filter by fuel type"
                   value={vehicleFuel}
                   onChange={(e) => setVehicleFuel(e.target.value)}
-                  className="h-10 w-full appearance-none rounded-lg border border-line bg-slate-50/50 pl-9 pr-9 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-accent focus:bg-white focus:ring-3 focus:ring-accent/15"
+                  className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-line bg-slate-50/50 pl-9 pr-9 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-accent focus:bg-white focus:ring-3 focus:ring-accent/15"
                 >
                   <option value="All">All fuel types</option>
                   <option value="Petrol">Petrol</option>
@@ -809,10 +809,11 @@ export default function AdminPage() {
                 label="Role"
                 value={editingUser.role}
                 onChange={(e) =>
-                  setEditingUser({ ...editingUser, role: e.target.value as 'Individual' | 'Admin' })
+                  setEditingUser({ ...editingUser, role: e.target.value as User['role'] })
                 }
               >
                 <option value="Individual">Individual (Standard User)</option>
+                <option value="Organizational">Organizational</option>
                 <option value="Admin">Administrator</option>
               </Select>
 

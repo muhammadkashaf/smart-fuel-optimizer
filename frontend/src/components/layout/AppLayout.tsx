@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { CarFront, LayoutDashboard, LogOut, Menu, UserRound, X, Layers, Users, ShieldAlert } from 'lucide-react';
+import { CarFront, Fuel, LayoutDashboard, LogOut, Menu, UserRound, X, Layers, Users, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -81,6 +81,7 @@ export default function AppLayout() {
               {renderNavLinks([
                 { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
                 { to: '/vehicles', label: 'My Vehicles', Icon: CarFront },
+                { to: '/fuel-records', label: 'Fuel Records', Icon: Fuel },
                 { to: '/profile', label: 'Profile', Icon: UserRound },
               ])}
             </div>

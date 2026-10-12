@@ -7,11 +7,17 @@ export default function DeleteVehicleModal({
   loading,
   onClose,
   onConfirm,
+  title = 'Delete vehicle record',
+  description = 'Are you sure you want to permanently remove this vehicle record? This action cannot be undone.',
+  confirmLabel = 'Delete vehicle',
 }: {
   open: boolean;
   loading: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  title?: string;
+  description?: string;
+  confirmLabel?: string;
 }) {
   useEffect(() => {
     const key = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -35,10 +41,10 @@ export default function DeleteVehicleModal({
           </div>
           <div className="min-w-0">
             <h2 id="delete-title" className="text-lg font-bold tracking-tight text-slate-900">
-              Delete vehicle record
+              {title}
             </h2>
             <p className="mt-1.5 text-sm leading-relaxed text-content-muted">
-              Are you sure you want to permanently remove this vehicle record? This action cannot be undone.
+              {description}
             </p>
           </div>
         </div>
@@ -49,7 +55,7 @@ export default function DeleteVehicleModal({
           </Button>
           <Button variant="danger" size="md" onClick={onConfirm} disabled={loading}>
             {loading && <Spinner />}
-            <span>Delete vehicle</span>
+            <span>{confirmLabel}</span>
           </Button>
         </div>
       </div>

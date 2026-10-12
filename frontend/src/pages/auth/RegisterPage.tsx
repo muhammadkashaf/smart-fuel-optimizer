@@ -62,6 +62,7 @@ export default function RegisterPage() {
 
         <Select label="Account role" error={errors.role?.message as string} {...register('role')}>
           <option value="Individual">Individual (Owner / Driver)</option>
+          <option value="Organizational">Organizational</option>
           <option value="Admin">Admin (Administrator)</option>
         </Select>
 
