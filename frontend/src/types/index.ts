@@ -44,6 +44,26 @@ export type FuelRecord = {
   updatedAt: string;
 };
 
+export type Budget = {
+  _id: string;
+  userId: string;
+  month: number;
+  year: number;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BudgetSummary = {
+  month: number;
+  year: number;
+  budget: number | null;
+  spent: number;
+  remaining: number | null;
+  percentageUsed: number | null;
+  isExceeded: boolean;
+};
+
 export type AdminStats = {
   totalUsers: number;
   totalAdmins: number;

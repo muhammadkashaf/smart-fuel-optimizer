@@ -11,6 +11,7 @@ import {
   PageSkeleton,
 } from '@/components/common';
 import VehicleBadge from '@/components/vehicles/VehicleBadge';
+import DashboardBudget from '@/components/budgets/DashboardBudget';
 import type { Vehicle } from '@/types';
 
 export default function DashboardPage() {
@@ -55,6 +56,8 @@ export default function DashboardPage() {
           </Link>
         }
       />
+
+      <DashboardBudget />
 
       {/* KPI Metric Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

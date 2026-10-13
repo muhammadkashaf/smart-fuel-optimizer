@@ -7,6 +7,7 @@ import IndividualRoute from './IndividualRoute';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
+import FuelBudgetPage from '@/pages/budgets/FuelBudgetPage';
 import VehicleListPage from '@/pages/vehicles/VehicleListPage';
 import AddVehiclePage from '@/pages/vehicles/AddVehiclePage';
 import EditVehiclePage from '@/pages/vehicles/EditVehiclePage';
@@ -55,6 +56,7 @@ export default function AppRoutes() {
             <Route path="/fuel-records" element={<FuelRecordListPage />} />
             <Route path="/fuel-records/new" element={<AddFuelRecordPage />} />
             <Route path="/fuel-records/:id/edit" element={<EditFuelRecordPage />} />
+            <Route path="/fuel-budget" element={<FuelBudgetPage />} />
           </Route>
 
           {/* Shared routes — accessible by both roles */}
