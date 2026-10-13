@@ -14,6 +14,9 @@ import EditVehiclePage from '@/pages/vehicles/EditVehiclePage';
 import FuelRecordListPage from '@/pages/fuelRecords/FuelRecordListPage';
 import AddFuelRecordPage from '@/pages/fuelRecords/AddFuelRecordPage';
 import EditFuelRecordPage from '@/pages/fuelRecords/EditFuelRecordPage';
+import TripListPage from '@/pages/trips/TripListPage';
+import AddTripPage from '@/pages/trips/AddTripPage';
+import EditTripPage from '@/pages/trips/EditTripPage';
 import ProfilePage from '@/pages/profile/ProfilePage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminVehiclesPage from '@/pages/admin/AdminVehiclesPage';
@@ -57,6 +60,9 @@ export default function AppRoutes() {
             <Route path="/fuel-records/new" element={<AddFuelRecordPage />} />
             <Route path="/fuel-records/:id/edit" element={<EditFuelRecordPage />} />
             <Route path="/fuel-budget" element={<FuelBudgetPage />} />
+            <Route path="/trips" element={<TripListPage />} />
+            <Route path="/trips/new" element={<AddTripPage />} />
+            <Route path="/trips/:id/edit" element={<EditTripPage />} />
           </Route>
 
           {/* Shared routes — accessible by both roles */}

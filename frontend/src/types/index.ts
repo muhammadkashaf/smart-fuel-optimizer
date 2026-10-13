@@ -44,6 +44,23 @@ export type FuelRecord = {
   updatedAt: string;
 };
 
+export type TripPriority = 'Essential' | 'Normal' | 'Non-essential';
+export type TripStatus = 'Planned' | 'Completed' | 'Cancelled';
+
+export type Trip = {
+  _id: string;
+  userId: string;
+  vehicleId: string | Pick<Vehicle, '_id' | 'vehicleName' | 'registrationNumber'>;
+  startLocation: string;
+  destination: string;
+  tripDate: string;
+  priority: TripPriority;
+  purpose: string;
+  status: TripStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Budget = {
   _id: string;
   userId: string;

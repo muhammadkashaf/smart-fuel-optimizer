@@ -3,7 +3,7 @@ import { verifyToken, checkRole } from "../middleware/auth.js";
 import { getBudget, getBudgetSummary, getPreviousBudget, putBudget } from "../controllers/budgetController.js";
 
 const router = express.Router();
-router.use(verifyToken, checkRole("Individual", "Organizational"));
+router.use("/budgets", verifyToken, checkRole("Individual", "Organizational"));
 
 router.put("/budgets/:year/:month", putBudget);
 router.get("/budgets/:year/:month", getBudget);
