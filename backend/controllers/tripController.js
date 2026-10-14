@@ -3,6 +3,10 @@ import Vehicle from "../models/Vehicle.js";
 
 const isValidId = (id) => typeof id === "string" && /^[a-f\d]{24}$/i.test(id);
 const isNonEmptyText = (value) => typeof value === "string" && value.trim().length > 0;
+const validCoordinates = (value) => value && typeof value === "object" &&
+  typeof value.lat === "number" && Number.isFinite(value.lat) && Math.abs(value.lat) <= 90 &&
+  typeof value.lng === "number" && Number.isFinite(value.lng) && Math.abs(value.lng) <= 180;
+const sameCoordinates = (a, b) => a?.lat === b?.lat && a?.lng === b?.lng;
 const parseDate = (value) => {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const date = new Date(`${value}T00:00:00.000Z`);
@@ -17,6 +21,8 @@ const validateFields = (body, requireAll) => {
   if (body.vehicleId !== undefined && !isValidId(body.vehicleId)) return "Vehicle ID is invalid";
   if (body.startLocation !== undefined && !isNonEmptyText(body.startLocation)) return "Starting point is required";
   if (body.destination !== undefined && !isNonEmptyText(body.destination)) return "Destination is required";
+  if (body.startCoordinates !== undefined && !validCoordinates(body.startCoordinates)) return "Select a valid starting point";
+  if (body.destinationCoordinates !== undefined && !validCoordinates(body.destinationCoordinates)) return "Select a valid destination";
   if (body.tripDate !== undefined && !parseDate(body.tripDate)) return "Enter a valid trip date (YYYY-MM-DD)";
   if (body.priority !== undefined && !tripPriorities.includes(body.priority)) return "Trip priority is invalid";
   if (body.status !== undefined && !tripStatuses.includes(body.status)) return "Trip status is invalid";
@@ -37,6 +43,8 @@ export const createTrip = async (req, res, next) => {
       vehicleId: vehicle._id,
       startLocation: body.startLocation.trim(),
       destination: body.destination.trim(),
+      startCoordinates: body.startCoordinates,
+      destinationCoordinates: body.destinationCoordinates,
       tripDate: parseDate(body.tripDate),
       priority: body.priority ?? "Normal",
       purpose: body.purpose?.trim() ?? "",
@@ -96,6 +104,12 @@ export const updateTrip = async (req, res, next) => {
     const body = req.body || {};
     const invalid = validateFields(body, false);
     if (invalid) return res.status(400).json({ message: invalid });
+    const startChanged = body.startLocation !== undefined && body.startLocation.trim() !== trip.startLocation;
+    const destinationChanged = body.destination !== undefined && body.destination.trim() !== trip.destination;
+    const locationChanged = startChanged || destinationChanged ||
+      (body.startCoordinates !== undefined && !sameCoordinates(body.startCoordinates, trip.startCoordinates)) ||
+      (body.destinationCoordinates !== undefined && !sameCoordinates(body.destinationCoordinates, trip.destinationCoordinates));
+    const vehicleChanged = body.vehicleId !== undefined && String(body.vehicleId) !== String(trip.vehicleId);
     if (body.vehicleId !== undefined) {
       const vehicle = await findOwnedVehicle(body.vehicleId, req.user._id);
       if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });
@@ -107,6 +121,11 @@ export const updateTrip = async (req, res, next) => {
     if (body.priority !== undefined) trip.priority = body.priority;
     if (body.purpose !== undefined) trip.purpose = body.purpose.trim();
     if (body.status !== undefined) trip.status = body.status;
+    if (body.startCoordinates !== undefined) trip.startCoordinates = body.startCoordinates;
+    else if (startChanged) trip.startCoordinates = undefined;
+    if (body.destinationCoordinates !== undefined) trip.destinationCoordinates = body.destinationCoordinates;
+    else if (destinationChanged) trip.destinationCoordinates = undefined;
+    if (locationChanged || vehicleChanged) trip.selectedRoute = undefined;
     await trip.save();
     await trip.populate("vehicleId", "vehicleName registrationNumber");
     return res.json({ message: "Trip updated successfully", trip });

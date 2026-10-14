@@ -1,4 +1,6 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { PageSkeleton } from '@/components/common';
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from './ProtectedRoute';
 import GuestRoute from './GuestRoute';
@@ -22,6 +24,8 @@ import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminVehiclesPage from '@/pages/admin/AdminVehiclesPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { useAuth } from '@/hooks/useAuth';
+
+const RoutePlannerPage = lazy(() => import('@/pages/trips/RoutePlannerPage'));
 
 function RoleAwareRedirect() {
   const { user, isAuthenticated } = useAuth();
@@ -63,6 +67,7 @@ export default function AppRoutes() {
             <Route path="/trips" element={<TripListPage />} />
             <Route path="/trips/new" element={<AddTripPage />} />
             <Route path="/trips/:id/edit" element={<EditTripPage />} />
+            <Route path="/trips/:id/route" element={<Suspense fallback={<PageSkeleton />}><RoutePlannerPage /></Suspense>} />
           </Route>
 
           {/* Shared routes — accessible by both roles */}

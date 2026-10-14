@@ -1,9 +1,13 @@
 import { z } from 'zod';
 
+const coordinates = z.object({ lat: z.number().finite().min(-90).max(90), lng: z.number().finite().min(-180).max(180) });
+
 export const tripSchema = z.object({
   vehicleId: z.string().min(1, 'Select a vehicle'),
   startLocation: z.string().trim().min(1, 'Enter a starting point'),
   destination: z.string().trim().min(1, 'Enter a destination'),
+  startCoordinates: coordinates.optional(),
+  destinationCoordinates: coordinates.optional(),
   tripDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date').refine((value) => {
     const date = new Date(`${value}T00:00:00.000Z`);
     return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;

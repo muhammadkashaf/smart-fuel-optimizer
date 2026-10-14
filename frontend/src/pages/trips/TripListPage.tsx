@@ -116,7 +116,9 @@ export default function TripListPage() {
                     <tr key={trip._id} className="transition-colors hover:bg-slate-50/70">
                       <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-900">{displayDate(trip.tripDate)}</td>
                       <td className="px-4 py-4"><div className="font-semibold text-slate-900">{vehicleName(trip)}</div><div className="text-xs text-content-muted">{vehicleRegistration(trip)}</div></td>
-                      <td className="max-w-xs px-4 py-4"><div className="font-semibold text-slate-900">{trip.startLocation} → {trip.destination}</div>{trip.purpose && <div className="truncate text-xs text-content-muted" title={trip.purpose}>{trip.purpose}</div>}</td>
+                      <td className="max-w-xs px-4 py-4"><div className="font-semibold text-slate-900">{trip.startLocation} → {trip.destination}</div>{trip.purpose && <div className="truncate text-xs text-content-muted" title={trip.purpose}>{trip.purpose}</div>}
+                        <Link className="mt-1.5 inline-block text-xs font-semibold text-accent hover:underline" to={`/trips/${trip._id}/route`}>{trip.selectedRoute ? 'View route' : 'Plan route'}</Link>
+                      </td>
                       <td className="px-4 py-4 text-slate-700">{trip.priority}</td><td className="px-4 py-4 text-slate-700">{trip.status}</td>
                       <td className="px-5 py-4 text-right"><VehicleActions editTo={`/trips/${trip._id}/edit`} itemName={tripLabel(trip)} resourceLabel="trip" onDelete={() => setTarget(trip)} /></td>
                     </tr>
@@ -130,7 +132,9 @@ export default function TripListPage() {
                     <h3 className="mt-1 text-sm font-semibold text-slate-900">{trip.startLocation} → {trip.destination}</h3>
                     {trip.purpose && <p className="mt-1 text-xs text-content-muted">{trip.purpose}</p>}
                   </div><VehicleActions editTo={`/trips/${trip._id}/edit`} itemName={tripLabel(trip)} resourceLabel="trip" onDelete={() => setTarget(trip)} /></div>
-                  <div className="flex flex-wrap gap-2 text-xs text-slate-700"><span className="rounded-md bg-slate-50 px-2 py-1">{trip.priority}</span><span className="rounded-md bg-slate-50 px-2 py-1">{trip.status}</span></div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-700"><span className="rounded-md bg-slate-50 px-2 py-1">{trip.priority}</span><span className="rounded-md bg-slate-50 px-2 py-1">{trip.status}</span>
+                    <Link className="ml-auto font-semibold text-accent hover:underline" to={`/trips/${trip._id}/route`}>{trip.selectedRoute ? 'View route' : 'Plan route'}</Link>
+                  </div>
                 </article>
               ))}</div>
             </div>

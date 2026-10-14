@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
 import { CarFront, Fuel } from 'lucide-react';
@@ -23,6 +23,7 @@ export default function VehicleForm({
 }) {
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -37,6 +38,7 @@ export default function VehicleForm({
       fuelTankCapacity: vehicle?.fuelTankCapacity ?? 0,
     },
   });
+  const electric = useWatch({ control, name: 'fuelType' }) === 'Electric';
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -113,16 +115,16 @@ export default function VehicleForm({
             <option value="Electric">Electric</option>
           </Select>
           <Input
-            label="Efficiency (km/L)"
+            label={electric ? 'Efficiency (km/kWh)' : 'Efficiency (km/L)'}
             type="number"
             step="0.1"
             placeholder="14.5"
-            hint="Average km per liter / kWh"
+            hint={electric ? 'Average kilometers per kWh' : 'Average kilometers per liter'}
             error={errors.fuelEfficiency?.message}
             {...register('fuelEfficiency', { valueAsNumber: true })}
           />
           <Input
-            label="Tank capacity (L)"
+            label={electric ? 'Battery capacity (kWh)' : 'Tank capacity (L)'}
             type="number"
             step="0.1"
             placeholder="55.0"

@@ -28,8 +28,12 @@ export default function EditTripPage() {
 
   const submit = async (values: TripFormValues) => {
     try {
+      const locationsChanged = values.startLocation !== trip.startLocation || values.destination !== trip.destination ||
+        values.startCoordinates?.lat !== trip.startCoordinates?.lat || values.startCoordinates?.lng !== trip.startCoordinates?.lng ||
+        values.destinationCoordinates?.lat !== trip.destinationCoordinates?.lat || values.destinationCoordinates?.lng !== trip.destinationCoordinates?.lng;
       const { data } = await updateTrip(id, values);
       toast.success(data.message);
+      if (locationsChanged && trip.selectedRoute && !data.trip.selectedRoute) toast('Trip locations changed. Please recalculate the route.');
       navigate('/trips');
     } catch (reason) {
       toast.error(getErrorMessage(reason));

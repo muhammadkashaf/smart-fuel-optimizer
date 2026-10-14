@@ -47,6 +47,27 @@ export type FuelRecord = {
 export type TripPriority = 'Essential' | 'Normal' | 'Non-essential';
 export type TripStatus = 'Planned' | 'Completed' | 'Cancelled';
 
+export type Coordinates = { lat: number; lng: number };
+export type RouteLocation = { label: string; coordinates: Coordinates };
+export type SelectedRoute = {
+  distanceKm: number;
+  durationMinutes: number;
+  estimatedResource: number;
+  resourceUnit: 'L' | 'kWh';
+  calculatedAt: string;
+  plannedAt: string;
+  fuelEfficiency: number;
+  fuelType: Vehicle['fuelType'];
+};
+export type RouteOption = Pick<SelectedRoute, 'distanceKm' | 'durationMinutes' | 'estimatedResource' | 'resourceUnit'> & {
+  id: string;
+  name: string;
+  geometry: { type: 'LineString'; coordinates: [number, number][] };
+  isRecommended: boolean;
+  isShortest: boolean;
+  isFastest: boolean;
+};
+
 export type Trip = {
   _id: string;
   userId: string;
@@ -57,6 +78,9 @@ export type Trip = {
   priority: TripPriority;
   purpose: string;
   status: TripStatus;
+  startCoordinates?: Coordinates;
+  destinationCoordinates?: Coordinates;
+  selectedRoute?: SelectedRoute;
   createdAt: string;
   updatedAt: string;
 };

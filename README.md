@@ -20,7 +20,7 @@ The repository is set up as a monorepo with two main directories:
 
 ## Prerequisites
 To run this project on your local machine, you must have the following installed:
-- **Node.js** (v14 or higher recommended)
+- **Node.js** (v22.12 or higher; Phase 5 checked with v24.12.0)
 - **MongoDB**: *(Not required locally as the project is configured to use a cloud MongoDB Atlas database. An active internet connection is required).*
 
 ---
@@ -71,6 +71,8 @@ The frontend runs on port `5173` using Vite.
 ---
 
 ## Evaluation / Testing Guide
+
+Phase 5 Google route planning setup, API details, assumptions, verification results, and the complete manual test procedure are in [docs/phase-5-route-planning.md](docs/phase-5-route-planning.md). Configure the website-restricted `VITE_GOOGLE_MAPS_API_KEY` in `frontend/.env` and a separate server-side `GOOGLE_ROUTES_API_KEY` in `backend/.env`.
 
 1. **Register a New User:** Go to the application in your browser, navigate to the registration page, and create a new account. You can choose either the **'Individual'** or **'Admin'** role during registration.
 2. **Login:** Log in using your registered email and password.

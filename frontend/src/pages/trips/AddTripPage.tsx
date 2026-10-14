@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { createTrip } from '@/api/tripApi';
 import { getVehicles } from '@/api/vehicleApi';
 import TripForm from '@/components/trips/TripForm';
+import TripRouteSteps from '@/components/trips/TripRouteSteps';
 import { Button, EmptyState, ErrorState, PageHeader, PageSkeleton } from '@/components/common';
 import type { TripFormValues } from '@/schemas/tripSchemas';
 import type { Vehicle } from '@/types';
@@ -23,11 +24,11 @@ export default function AddTripPage() {
   if (error) return <ErrorState message={error} />;
   if (!vehicles) return <PageSkeleton />;
 
-  const submit = async (values: TripFormValues) => {
+  const submit = async (values: TripFormValues, action: 'save' | 'plan') => {
     try {
       const { data } = await createTrip(values);
       toast.success(data.message);
-      navigate('/trips');
+      navigate(action === 'plan' ? `/trips/${data.trip._id}/route` : '/trips');
     } catch (reason) {
       toast.error(getErrorMessage(reason));
       throw reason;
@@ -37,6 +38,7 @@ export default function AddTripPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader title="Add trip" subtitle="Plan a trip with one of your vehicles." />
+      <TripRouteSteps active="details" />
       {vehicles.length === 0 ? (
         <EmptyState title="Add a vehicle first" description="Trips must be linked to one of your registered vehicles."
           action={<Link to="/vehicles/new"><Button><Plus className="h-4 w-4" />Add vehicle</Button></Link>} />

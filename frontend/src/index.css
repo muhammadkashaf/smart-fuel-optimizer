@@ -86,6 +86,10 @@ button:not(:disabled) {
   @apply h-10 w-full rounded-control border border-line bg-surface px-3.5 text-sm text-content outline-none transition-all placeholder:text-content-subtle hover:border-slate-300 focus:border-accent focus:bg-white focus:ring-3 focus:ring-accent/15 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-content-muted;
 }
 
+textarea.field-control {
+  @apply h-auto min-h-24 py-2.5;
+}
+
 input[type='date']:not(:disabled)::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
