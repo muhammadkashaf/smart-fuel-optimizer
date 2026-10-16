@@ -5,6 +5,7 @@ import vehicleRoutes from "./routes/vehicleRoutes.js";
 import fuelRecordRoutes from "./routes/fuelRecordRoutes.js";
 import budgetRoutes from "./routes/budgetRoutes.js";
 import tripRoutes from "./routes/tripRoutes.js";
+import crisisModeRoutes from "./routes/crisisModeRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 
@@ -44,6 +45,7 @@ app.use("/api", vehicleRoutes);
 app.use("/api", fuelRecordRoutes);
 app.use("/api", budgetRoutes);
 app.use("/api", tripRoutes);
+app.use("/api", crisisModeRoutes);
 app.use("/api", adminRoutes);
 
 app.use(notFound);

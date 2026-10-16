@@ -9,6 +9,7 @@ import IndividualRoute from './IndividualRoute';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
+import CrisisModePage from '@/pages/crisis/CrisisModePage';
 import FuelBudgetPage from '@/pages/budgets/FuelBudgetPage';
 import VehicleListPage from '@/pages/vehicles/VehicleListPage';
 import AddVehiclePage from '@/pages/vehicles/AddVehiclePage';
@@ -57,6 +58,7 @@ export default function AppRoutes() {
           {/* Individual-only routes — Admin gets redirected to /admin/users */}
           <Route element={<IndividualRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/crisis-mode" element={<CrisisModePage />} />
             <Route path="/vehicles" element={<VehicleListPage />} />
             <Route path="/vehicles/new" element={<AddVehiclePage />} />
             <Route path="/vehicles/:id/edit" element={<EditVehiclePage />} />

@@ -58,6 +58,8 @@ export type SelectedRoute = {
   plannedAt: string;
   fuelEfficiency: number;
   fuelType: Vehicle['fuelType'];
+  wasLowestConsumption?: boolean;
+  bestAvailableEstimatedResource?: number;
 };
 export type RouteOption = Pick<SelectedRoute, 'distanceKm' | 'durationMinutes' | 'estimatedResource' | 'resourceUnit'> & {
   id: string;
@@ -103,6 +105,41 @@ export type BudgetSummary = {
   remaining: number | null;
   percentageUsed: number | null;
   isExceeded: boolean;
+};
+
+export type CrisisRecommendationType = 'POSTPONE_NON_ESSENTIAL' | 'COMBINE_TRIPS' | 'PLAN_ROUTE' | 'REVIEW_INEFFICIENT_ROUTE' | 'UPDATE_VEHICLE_EFFICIENCY';
+export type CrisisTripDetails = {
+  id: string;
+  start: string;
+  destination: string;
+  tripDate: string;
+  vehicleName: string;
+  vehicleRegistration: string;
+};
+export type CrisisRecommendation = {
+  id: string;
+  type: CrisisRecommendationType;
+  severity: 'HIGH' | 'MEDIUM' | 'INFO';
+  title: string;
+  message: string;
+  relatedTripIds: string[];
+  relatedTrips: CrisisTripDetails[];
+  action: { label: string; path: string };
+  estimatedResourceSaving?: number;
+  resourceUnit?: 'L' | 'kWh';
+};
+export type CrisisSummary = {
+  plannedTrips: number;
+  nonEssentialTrips: number;
+  tripsWithoutRoutes: number;
+  estimatedPlannedFuelLiters: number;
+  estimatedPlannedEnergyKwh: number;
+  tripsWithEstimates: number;
+};
+export type CrisisRecommendationsResponse = {
+  enabled: boolean;
+  summary: CrisisSummary | null;
+  recommendations: CrisisRecommendation[];
 };
 
 export type AdminStats = {

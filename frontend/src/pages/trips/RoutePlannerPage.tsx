@@ -14,6 +14,13 @@ import type { RouteLocation, SelectedRoute, Trip, Vehicle } from '@/types';
 import { getErrorMessage } from '@/utils/errorHandler';
 
 const number = new Intl.NumberFormat('en-PK', { maximumFractionDigits: 2 });
+const currentEstimate = (route: SelectedRoute | undefined, vehicle: Vehicle) => Boolean(route &&
+  Number.isFinite(vehicle.fuelEfficiency) && vehicle.fuelEfficiency > 0 &&
+  ['Petrol', 'Diesel', 'Electric'].includes(vehicle.fuelType) &&
+  route.fuelEfficiency === vehicle.fuelEfficiency && route.fuelType === vehicle.fuelType &&
+  route.resourceUnit === (vehicle.fuelType === 'Electric' ? 'kWh' : 'L') &&
+  Number.isFinite(route.distanceKm) && route.distanceKm > 0 &&
+  Number.isFinite(route.estimatedResource) && route.estimatedResource > 0);
 
 function Planner({ initialTrip, vehicle }: { initialTrip: Trip; vehicle: Vehicle }) {
   const [trip, setTrip] = useState(initialTrip);
@@ -22,8 +29,9 @@ function Planner({ initialTrip, vehicle }: { initialTrip: Trip; vehicle: Vehicle
   const [result, setResult] = useState<RouteOptionsResponse | null>(null);
   const [selectedId, setSelectedId] = useState('');
   const [savedId, setSavedId] = useState('');
-  const efficiencyValid = Number.isFinite(vehicle.fuelEfficiency) && vehicle.fuelEfficiency > 0;
-  const canRestore = Boolean(initialTrip.selectedRoute && initialTrip.startCoordinates && initialTrip.destinationCoordinates && efficiencyValid);
+  const efficiencyValid = Number.isFinite(vehicle.fuelEfficiency) && vehicle.fuelEfficiency > 0 &&
+    ['Petrol', 'Diesel', 'Electric'].includes(vehicle.fuelType);
+  const canRestore = Boolean(initialTrip.startCoordinates && initialTrip.destinationCoordinates && currentEstimate(initialTrip.selectedRoute, vehicle));
   const [calculating, setCalculating] = useState(canRestore);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -103,6 +111,7 @@ function Planner({ initialTrip, vehicle }: { initialTrip: Trip; vehicle: Vehicle
 
   const selected = result?.options.find((option) => option.id === selectedId);
   const saved = trip.selectedRoute;
+  const savedEstimateCurrent = currentEstimate(saved, vehicle);
   const select = (id: string) => { if (!saving) setSelectedId(id); };
 
   return (
@@ -149,9 +158,9 @@ function Planner({ initialTrip, vehicle }: { initialTrip: Trip; vehicle: Vehicle
           <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div><dt className="text-xs text-content-muted">Distance</dt><dd className="mt-1 text-sm font-semibold">{number.format(saved.distanceKm)} km</dd></div>
             <div><dt className="text-xs text-content-muted">Estimated travel time</dt><dd className="mt-1 text-sm font-semibold">{number.format(saved.durationMinutes)} min</dd></div>
-            <div><dt className="text-xs text-content-muted">Estimated {saved.resourceUnit === 'kWh' ? 'energy' : 'fuel'}</dt><dd className="mt-1 text-sm font-semibold">{number.format(saved.estimatedResource)} {saved.resourceUnit}</dd></div>
+            <div><dt className="text-xs text-content-muted">Estimated {saved.resourceUnit === 'kWh' ? 'energy' : 'fuel'}</dt><dd className="mt-1 text-sm font-semibold">{savedEstimateCurrent ? `${number.format(saved.estimatedResource)} ${saved.resourceUnit}` : 'Recalculation needed'}</dd></div>
           </dl>
-          {saved.fuelEfficiency !== vehicle.fuelEfficiency || saved.fuelType !== vehicle.fuelType ? <p className="mt-3 text-xs text-warning">Vehicle efficiency or fuel type has changed since this plan was saved. Recalculate and save an updated plan.</p> : null}
+          {!savedEstimateCurrent && <p className="mt-3 text-xs text-warning">The saved fuel or energy estimate is outdated or invalid. Recalculate and save an updated route plan.</p>}
           {restored && <p className="mt-3 text-xs text-content-muted">{savedId ? 'A matching route is selected on the refreshed map.' : 'The map shows freshly calculated alternatives. Your saved summary above is kept until you save a new selection.'}</p>}
         </section>
       )}

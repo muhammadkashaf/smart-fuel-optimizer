@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { getTrip, updateTrip } from '@/api/tripApi';
 import { getVehicles } from '@/api/vehicleApi';
 import TripForm from '@/components/trips/TripForm';
-import { ErrorState, PageHeader, PageSkeleton } from '@/components/common';
+import { Button, ErrorState, PageHeader, PageSkeleton } from '@/components/common';
 import type { TripFormValues } from '@/schemas/tripSchemas';
 import type { Trip, Vehicle } from '@/types';
 import { getErrorMessage } from '@/utils/errorHandler';
@@ -23,7 +23,10 @@ export default function EditTripPage() {
     }).catch((reason) => setError(getErrorMessage(reason)));
   }, [id]);
 
-  if (error) return <ErrorState message={error} />;
+  if (error) return <div className="space-y-4">
+    <ErrorState message={error} />
+    <Button variant="secondary" onClick={() => navigate('/trips')}>Back to trips</Button>
+  </div>;
   if (!trip || !vehicles) return <PageSkeleton />;
 
   const submit = async (values: TripFormValues) => {

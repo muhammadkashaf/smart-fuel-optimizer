@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       required: true,
       select: false,
     },
+    crisisModeEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

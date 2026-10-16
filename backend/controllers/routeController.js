@@ -48,11 +48,14 @@ export const saveRoute = async (req, res, next) => {
     }
     const option = plan.options.find((item) => item.id === optionId);
     if (!option) throw new RoutingError(400, "INVALID_ROUTE", "Select one of the calculated routes.");
+    const bestAvailableEstimatedResource = Math.min(...plan.options.map((item) => item.estimatedResource));
     const selectedRoute = {
       distanceKm: option.distanceKm, durationMinutes: option.durationMinutes,
       estimatedResource: option.estimatedResource, resourceUnit: option.resourceUnit,
       calculatedAt: new Date(plan.calculatedAt), plannedAt: new Date(),
       fuelEfficiency: vehicle.fuelEfficiency, fuelType: vehicle.fuelType,
+      wasLowestConsumption: Math.abs(option.estimatedResource - bestAvailableEstimatedResource) < 1e-9,
+      bestAvailableEstimatedResource,
     };
     // Optimistic update prevents saving over a trip changed in another tab during this request.
     const updated = await Trip.findOneAndUpdate({ _id: trip._id, userId: req.user._id, updatedAt: trip.updatedAt }, {

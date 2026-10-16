@@ -12,6 +12,7 @@ import {
 } from '@/components/common';
 import VehicleBadge from '@/components/vehicles/VehicleBadge';
 import DashboardBudget from '@/components/budgets/DashboardBudget';
+import DashboardCrisisMode from '@/components/crisis/DashboardCrisisMode';
 import type { Vehicle } from '@/types';
 
 export default function DashboardPage() {
@@ -58,6 +59,7 @@ export default function DashboardPage() {
       />
 
       <DashboardBudget />
+      <DashboardCrisisMode />
 
       {/* KPI Metric Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -17,6 +17,9 @@ const selectedRouteSchema = new mongoose.Schema({
   plannedAt: { type: Date, required: true },
   fuelEfficiency: { type: Number, required: true, min: 0 },
   fuelType: { type: String, enum: ["Petrol", "Diesel", "Electric"], required: true },
+  // Optional comparison snapshot. Older saved routes remain readable.
+  wasLowestConsumption: { type: Boolean },
+  bestAvailableEstimatedResource: { type: Number, min: 0 },
 }, { _id: false });
 
 const tripSchema = new mongoose.Schema(
