@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Vehicle from "../models/Vehicle.js";
 import { isValidContactNumber, isValidEmail, isPositiveNumber, isValidYear } from "../utils/validation.js";
+import { syncNotificationsForVehicle } from "../services/notificationService.js";
 
 // GET /api/admin-only
 export const getAdminAccess = async (req, res, next) => {
@@ -265,6 +266,10 @@ export const updateAdminVehicle = async (req, res, next) => {
 
     await vehicle.save();
 
+    if (req.body.fuelType !== undefined || req.body.fuelEfficiency !== undefined) {
+      await syncNotificationsForVehicle(vehicle.userId, vehicle._id);
+    }
+
     const updated = await Vehicle.findById(vehicle._id).populate("userId", "fullName email role");
 
     res.json({
@@ -285,6 +290,7 @@ export const deleteAdminVehicle = async (req, res, next) => {
     }
 
     await vehicle.deleteOne();
+    await syncNotificationsForVehicle(vehicle.userId, vehicle._id);
     res.json({ message: "Vehicle removed successfully" });
   } catch (error) {
     next(error);

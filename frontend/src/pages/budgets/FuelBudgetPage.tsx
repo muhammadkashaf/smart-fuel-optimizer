@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CalendarDays, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Pencil, Wallet } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useLocation } from 'react-router-dom';
 import { getBudget, getBudgetSummary, getPreviousBudget, putBudget } from '@/api/budgetApi';
 import { formatPkr } from '@/components/budgets/BudgetOverview';
 import { Button, Input, PageHeader, Skeleton, Spinner } from '@/components/common';
@@ -16,9 +17,19 @@ const months = Array.from({ length: 12 }, (_, index) =>
   new Date(2000, index, 1).toLocaleString('en-PK', { month: 'long' }),
 );
 const periodKey = ({ year, month }: Period) => `${year}-${month}`;
+const periodFromSearch = (search: string): Period => {
+  const params = new URLSearchParams(search);
+  const year = Number(params.get('year'));
+  const month = Number(params.get('month'));
+  return Number.isInteger(year) && year >= 2000 && year <= 2100 &&
+    Number.isInteger(month) && month >= 1 && month <= 12
+    ? { year, month }
+    : { year: initialDate.getFullYear(), month: initialDate.getMonth() + 1 };
+};
 
 export default function FuelBudgetPage() {
-  const [period, setPeriod] = useState<Period>({ year: initialDate.getFullYear(), month: initialDate.getMonth() + 1 });
+  const location = useLocation();
+  const [period, setPeriod] = useState<Period>(() => periodFromSearch(location.search));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(initialDate.getFullYear());
   const [budget, setBudget] = useState<Budget | null>(null);
@@ -45,6 +56,18 @@ export default function FuelBudgetPage() {
   const isCurrent = period.year === now.getFullYear() && period.month === now.getMonth() + 1;
   const isFirst = period.year === 2000 && period.month === 1;
   const isLast = period.year === 2100 && period.month === 12;
+
+  useEffect(() => {
+    const next = periodFromSearch(location.search);
+    if (periodKey(next) === periodKey(period)) return;
+    requestId.current += 1;
+    setStatus('loading');
+    setEditing(false);
+    setSettingDifferent(false);
+    setCopyConfirm(false);
+    setPeriod(next);
+  // A notification can navigate to a different budget month while this page is mounted.
+  }, [location.search]);
 
   const selectPeriod = (next: Period) => {
     if (saving || next.year < 2000 || next.year > 2100 || next.month < 1 || next.month > 12) return;

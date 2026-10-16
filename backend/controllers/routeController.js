@@ -2,6 +2,7 @@ import Trip from "../models/Trip.js";
 import Vehicle from "../models/Vehicle.js";
 import { routingProvider, RoutingError } from "../services/routingProvider.js";
 import { parseLocation, validateEfficiency, estimateRoutes, vehicleFingerprint, routePlanStore } from "../services/routePlanning.js";
+import { syncCrisisNotifications, syncInefficientTripNotification } from "../services/notificationService.js";
 
 const handleError = (error, res, next) => error instanceof RoutingError
   ? res.status(error.status).json({ code: error.code, message: error.message }) : next(error);
@@ -64,6 +65,8 @@ export const saveRoute = async (req, res, next) => {
     }, { new: true, runValidators: true });
     if (!updated) throw new RoutingError(409, "ROUTE_PLAN_CHANGED", "This trip has changed. Reload the planner and find routes again.");
     plan.tripVersion = updated.updatedAt.toISOString();
+    await syncInefficientTripNotification(req.user._id, updated);
+    await syncCrisisNotifications(req.user._id);
     return res.json({ message: "Route saved to your trip", trip: updated });
   } catch (error) { return handleError(error, res, next); }
 };

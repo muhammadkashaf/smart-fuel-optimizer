@@ -1,5 +1,6 @@
 import Trip, { tripPriorities, tripStatuses } from "../models/Trip.js";
 import Vehicle from "../models/Vehicle.js";
+import { resolveTripNotifications, syncCrisisNotifications, syncInefficientTripNotification } from "../services/notificationService.js";
 
 const isValidId = (id) => typeof id === "string" && /^[a-f\d]{24}$/i.test(id);
 const isNonEmptyText = (value) => typeof value === "string" && value.trim().length > 0;
@@ -51,6 +52,7 @@ export const createTrip = async (req, res, next) => {
       status: body.status ?? "Planned",
     });
     const trip = await populateVehicle(Trip.findById(created._id));
+    await syncCrisisNotifications(req.user._id);
     return res.status(201).json({ message: "Trip added successfully", trip });
   } catch (error) {
     return next(error);
@@ -127,6 +129,8 @@ export const updateTrip = async (req, res, next) => {
     else if (destinationChanged) trip.destinationCoordinates = undefined;
     if (locationChanged || vehicleChanged) trip.selectedRoute = undefined;
     await trip.save();
+    await syncInefficientTripNotification(req.user._id, trip);
+    await syncCrisisNotifications(req.user._id);
     await trip.populate("vehicleId", "vehicleName registrationNumber");
     return res.json({ message: "Trip updated successfully", trip });
   } catch (error) {
@@ -142,6 +146,8 @@ export const deleteTrip = async (req, res, next) => {
       return res.status(404).json({ message: "Trip not found" });
     }
     await trip.deleteOne();
+    await resolveTripNotifications(req.user._id, trip._id);
+    await syncCrisisNotifications(req.user._id);
     return res.json({ message: "Trip removed successfully" });
   } catch (error) {
     return next(error);

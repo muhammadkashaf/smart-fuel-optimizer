@@ -1,5 +1,6 @@
 import Vehicle from "../models/Vehicle.js";
 import { isPositiveNumber, isValidYear } from "../utils/validation.js";
+import { syncNotificationsForVehicle } from "../services/notificationService.js";
 
 const isOwnerOrAdmin = (vehicle, user) => {
   const ownerId = vehicle.userId?._id
@@ -139,6 +140,9 @@ export const updateVehicle = async (req, res, next) => {
     if (req.body.manufacturer !== undefined) vehicle.manufacturer = String(req.body.manufacturer).trim();
 
     await vehicle.save();
+    if (req.body.fuelType !== undefined || req.body.fuelEfficiency !== undefined) {
+      await syncNotificationsForVehicle(vehicle.userId, vehicle._id);
+    }
 
     res.json({
       message: "Vehicle details updated successfully",
@@ -162,6 +166,7 @@ export const deleteVehicle = async (req, res, next) => {
     }
 
     await vehicle.deleteOne();
+    await syncNotificationsForVehicle(vehicle.userId, vehicle._id);
 
     res.json({ message: "Vehicle removed successfully" });
   } catch (error) {

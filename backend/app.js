@@ -7,6 +7,7 @@ import budgetRoutes from "./routes/budgetRoutes.js";
 import tripRoutes from "./routes/tripRoutes.js";
 import crisisModeRoutes from "./routes/crisisModeRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -24,7 +25,7 @@ app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", requestOrigin || "*");
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
 
     if (req.method === "OPTIONS") {
       return res.sendStatus(204);
@@ -46,6 +47,7 @@ app.use("/api", fuelRecordRoutes);
 app.use("/api", budgetRoutes);
 app.use("/api", tripRoutes);
 app.use("/api", crisisModeRoutes);
+app.use("/api", notificationRoutes);
 app.use("/api", adminRoutes);
 
 app.use(notFound);

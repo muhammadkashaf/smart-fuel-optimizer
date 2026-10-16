@@ -107,6 +107,20 @@ export type BudgetSummary = {
   isExceeded: boolean;
 };
 
+export type Notification = {
+  _id: string;
+  type: 'BUDGET_EXCEEDED' | 'INEFFICIENT_TRIP' | 'CRISIS_RECOMMENDATION';
+  severity: 'HIGH' | 'MEDIUM' | 'INFO';
+  title: string;
+  message: string;
+  actionPath: string;
+  isRead: boolean;
+  isResolved: boolean;
+  lastTriggeredAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CrisisRecommendationType = 'POSTPONE_NON_ESSENTIAL' | 'COMBINE_TRIPS' | 'PLAN_ROUTE' | 'REVIEW_INEFFICIENT_ROUTE' | 'UPDATE_VEHICLE_EFFICIENCY';
 export type CrisisTripDetails = {
   id: string;

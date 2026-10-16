@@ -1,5 +1,6 @@
 import Budget from "../models/Budget.js";
-import FuelRecord from "../models/FuelRecord.js";
+import { getMonthlyBudgetState } from "../services/budgetSummary.js";
+import { syncBudgetExceededNotification } from "../services/notificationService.js";
 
 const parsePeriod = ({ year, month }) => {
   if (!/^\d{4}$/.test(year) || !/^\d{1,2}$/.test(month)) return null;
@@ -30,6 +31,7 @@ export const putBudget = async (req, res, next) => {
       { $set: { amount } },
       { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
     );
+    await syncBudgetExceededNotification(req.user._id, period.year, period.month);
     return res.json({ message: "Monthly budget saved successfully", budget });
   } catch (error) {
     return next(error);
@@ -68,27 +70,7 @@ export const getBudgetSummary = async (req, res, next) => {
   const period = periodFromRequest(req, res);
   if (!period) return;
   try {
-    const { year, month } = period;
-    const start = new Date(Date.UTC(year, month - 1, 1));
-    const end = new Date(Date.UTC(year, month, 1));
-    const [budget, totals] = await Promise.all([
-      Budget.findOne({ userId: req.user._id, ...period }),
-      FuelRecord.aggregate([
-        { $match: { userId: req.user._id, date: { $gte: start, $lt: end } } },
-        { $group: { _id: null, spent: { $sum: "$cost" } } },
-      ]),
-    ]);
-    const spent = totals[0]?.spent ?? 0;
-    const amount = budget?.amount ?? null;
-    return res.json({
-      month,
-      year,
-      budget: amount,
-      spent,
-      remaining: amount === null ? null : amount - spent,
-      percentageUsed: amount === null ? null : (spent / amount) * 100,
-      isExceeded: amount !== null && spent > amount,
-    });
+    return res.json(await getMonthlyBudgetState(req.user._id, period.year, period.month));
   } catch (error) {
     return next(error);
   }

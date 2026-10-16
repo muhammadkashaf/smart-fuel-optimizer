@@ -5,6 +5,7 @@ import Vehicle from "../../models/Vehicle.js";
 import Trip from "../../models/Trip.js";
 import Budget from "../../models/Budget.js";
 import FuelRecord from "../../models/FuelRecord.js";
+import Notification from "../../models/Notification.js";
 import { routingProvider } from "../../services/routingProvider.js";
 
 export const ids = {
@@ -35,6 +36,7 @@ export function installPlannerFixture() {
     { _id: ids.orgVehicle, userId: ids.organization, vehicleName: "Fleet EV", registrationNumber: "ORG-2026", manufacturer: "BYD", modelYear: 2025, fuelType: "Electric", fuelEfficiency: 6, fuelTankCapacity: 60 },
   ];
   const trips = new Map();
+  const notifications = new Map();
   for (const [id, userId, vehicleId] of [[ids.trip, ids.individual, ids.vehicle], [ids.orgTrip, ids.organization, ids.orgVehicle]]) {
     trips.set(id, { _id: id, userId, vehicleId, startLocation: "Gulberg Lahore", destination: "Lahore Fort", tripDate: new Date("2026-10-20"), priority: "Normal", purpose: "Team meeting", status: "Planned", createdAt: new Date(), updatedAt: new Date() });
   }
@@ -65,6 +67,38 @@ export function installPlannerFixture() {
   replace(Vehicle, "find", (filter) => query(vehicles.filter((vehicle) => matches(vehicle, filter))));
   replace(Budget, "findOne", () => query(null));
   replace(FuelRecord, "aggregate", async () => []);
+  const notificationKey = (filter) => `${filter.userId}:${filter.dedupeKey}`;
+  replace(Notification, "findOneAndUpdate", async (filter, update) => {
+    const key = notificationKey(filter);
+    const item = notifications.get(key) ?? { _id: String(notifications.size + 1).padStart(24, "0"), ...filter, ...update.$setOnInsert, createdAt: new Date() };
+    Object.assign(item, update.$set);
+    notifications.set(key, item);
+    return item;
+  });
+  replace(Notification, "updateOne", async (filter, update) => {
+    const item = notifications.get(notificationKey(filter));
+    if (item && (filter.isResolved === undefined || item.isResolved === filter.isResolved)) Object.assign(item, update.$set);
+  });
+  replace(Notification, "updateMany", async (filter, update) => {
+    for (const item of notifications.values()) {
+      if (String(item.userId) !== String(filter.userId) || (filter.type && item.type !== filter.type)) continue;
+      if (filter.isResolved !== undefined && item.isResolved !== filter.isResolved) continue;
+      if (filter.dedupeKey?.$nin?.includes(item.dedupeKey)) continue;
+      Object.assign(item, update.$set);
+    }
+  });
+  replace(Notification, "countDocuments", async (filter) => [...notifications.values()].filter((item) =>
+    String(item.userId) === String(filter.userId) &&
+    (filter.isRead === undefined || item.isRead === filter.isRead) &&
+    (filter.isResolved === undefined || item.isResolved === filter.isResolved)).length);
+  replace(Notification, "find", (filter) => {
+    const items = [...notifications.values()].filter((item) => String(item.userId) === String(filter.userId));
+    let offset = 0;
+    let limit = 20;
+    const result = { sort() { return this; }, skip(value) { offset = value; return this; },
+      limit(value) { limit = value; return this; }, lean: async () => items.slice(offset, offset + limit) };
+    return result;
+  });
   replace(Trip, "findOne", async (filter) => tripDoc([...trips.values()].find((trip) => matches(trip, filter))));
   replace(Trip, "findById", (id) => { const doc = tripDoc(trips.get(String(id))); return query(doc, () => doc?.populate()); });
   replace(Trip, "find", (filter) => { const docs = [...trips.values()].filter((trip) => matches(trip, filter)).map(tripDoc); return query(docs, () => docs.forEach((doc) => doc.populate())); });

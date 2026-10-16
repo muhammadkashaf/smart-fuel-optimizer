@@ -10,7 +10,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config.method?.toLowerCase();
+    const path = response.config.url ?? '';
+    if (method && method !== 'get' && !path.endsWith('/route-options') &&
+      /\/(?:fuel-records|budgets|trips|crisis-mode|vehicles)(?:\/|$)/.test(path)) {
+      window.dispatchEvent(new Event('notifications:refresh'));
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem(TOKEN_KEY);

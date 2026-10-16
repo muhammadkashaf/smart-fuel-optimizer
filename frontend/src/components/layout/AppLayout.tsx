@@ -1,15 +1,40 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { BarChart3, CalendarDays, CarFront, Fuel, LayoutDashboard, LogOut, Menu, UserRound, X, Layers, Users, ShieldAlert, ShieldCheck, Wallet } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { getNotificationUnreadCount } from '@/api/notificationApi';
+import NotificationBell from '@/components/notifications/NotificationBell';
+import { NotificationContext } from '@/context/NotificationContext';
 
 export default function AppLayout() {
   const [open, setOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number | null>(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const isAdmin = user?.role === 'Admin';
+  const refreshUnreadCount = useCallback(async () => {
+    if (isAdmin) return;
+    try {
+      const response = await getNotificationUnreadCount();
+      setUnreadCount(response.data.unreadCount);
+    } catch {
+      // Keep the last known count. A failed request is not a zero count.
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin) return;
+    void refreshUnreadCount();
+    const onFocus = () => { void refreshUnreadCount(); };
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('notifications:refresh', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('notifications:refresh', onFocus);
+    };
+  }, [isAdmin, refreshUnreadCount]);
 
   const leave = async () => {
     await logout();
@@ -42,7 +67,7 @@ export default function AppLayout() {
 
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <NotificationContext.Provider value={{ onCountChange: setUnreadCount }}><div className="min-h-screen bg-canvas">
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-sidebar-border bg-sidebar p-4 shadow-xl transition-transform duration-200 ease-in-out md:translate-x-0 ${
@@ -139,6 +164,7 @@ export default function AppLayout() {
           </button>
 
           <div className="ml-auto flex items-center gap-4">
+            {!isAdmin && <NotificationBell unreadCount={unreadCount} onCountChange={setUnreadCount} />}
             <div className="hidden items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-50/80 px-2.5 py-1 text-xs font-medium text-emerald-700 sm:inline-flex">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Operational
@@ -165,6 +191,6 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
-    </div>
+    </div></NotificationContext.Provider>
   );
 }

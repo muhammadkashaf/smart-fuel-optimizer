@@ -28,6 +28,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const RoutePlannerPage = lazy(() => import('@/pages/trips/RoutePlannerPage'));
 const AnalyticsPage = lazy(() => import('@/pages/analytics/AnalyticsPage'));
+const NotificationsPage = lazy(() => import('@/pages/notifications/NotificationsPage'));
 
 function RoleAwareRedirect() {
   const { user, isAuthenticated } = useAuth();
@@ -60,6 +61,7 @@ export default function AppRoutes() {
           <Route element={<IndividualRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/analytics" element={<Suspense fallback={<PageSkeleton />}><AnalyticsPage /></Suspense>} />
+            <Route path="/notifications" element={<Suspense fallback={<PageSkeleton />}><NotificationsPage /></Suspense>} />
             <Route path="/crisis-mode" element={<CrisisModePage />} />
             <Route path="/vehicles" element={<VehicleListPage />} />
             <Route path="/vehicles/new" element={<AddVehiclePage />} />

@@ -1,7 +1,6 @@
 import User from "../models/User.js";
-import Trip from "../models/Trip.js";
-import Vehicle from "../models/Vehicle.js";
-import { buildCrisisRecommendations, pakistanToday } from "../services/crisisRecommendations.js";
+import { getCurrentCrisisRecommendations } from "../services/currentCrisisRecommendations.js";
+import { syncCrisisNotifications } from "../services/notificationService.js";
 
 export const getCrisisMode = async (req, res, next) => {
   try {
@@ -22,6 +21,7 @@ export const updateCrisisMode = async (req, res, next) => {
       { new: true, runValidators: true },
     ).select("crisisModeEnabled");
     if (!user) return res.status(401).json({ message: "We could not verify your account" });
+    await syncCrisisNotifications(req.user._id, { resolveWhenOff: true });
     return res.json({ enabled: user.crisisModeEnabled, message: user.crisisModeEnabled ? "Crisis Mode enabled" : "Crisis Mode disabled" });
   } catch (error) { return next(error); }
 };
@@ -32,16 +32,6 @@ export const getRecommendations = async (req, res, next) => {
     if (!user) return res.status(401).json({ message: "We could not verify your account" });
     if (!user.crisisModeEnabled) return res.json({ enabled: false, summary: null, recommendations: [] });
 
-    const vehicles = await Vehicle.find({ userId: req.user._id })
-      .select("_id vehicleName registrationNumber fuelType fuelEfficiency").lean();
-    const today = pakistanToday();
-    const trips = await Trip.find({
-      userId: req.user._id,
-      vehicleId: { $in: vehicles.map((vehicle) => vehicle._id) },
-      status: "Planned",
-      tripDate: { $gte: new Date(`${today}T00:00:00.000Z`) },
-    }).select("_id vehicleId startLocation destination tripDate priority status startCoordinates destinationCoordinates selectedRoute")
-      .sort({ tripDate: 1, _id: 1 }).lean();
-    return res.json({ enabled: true, ...buildCrisisRecommendations(trips, vehicles, today) });
+    return res.json({ enabled: true, ...await getCurrentCrisisRecommendations(req.user._id) });
   } catch (error) { return next(error); }
 };

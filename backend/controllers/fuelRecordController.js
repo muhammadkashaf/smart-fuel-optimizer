@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import FuelRecord from "../models/FuelRecord.js";
 import Vehicle from "../models/Vehicle.js";
+import { periodFromDate, syncBudgetExceededNotification } from "../services/notificationService.js";
 
 const isValidId = (id) => typeof id === "string" && /^[a-f\d]{24}$/i.test(id);
 
@@ -42,6 +43,8 @@ export const createFuelRecord = async (req, res, next) => {
       cost,
     });
     const record = await populateVehicle(FuelRecord.findById(created._id));
+    const period = periodFromDate(created.date);
+    await syncBudgetExceededNotification(req.user._id, period.year, period.month);
     res.status(201).json({ message: "Fuel record added successfully", record });
   } catch (error) {
     next(error);
@@ -95,6 +98,7 @@ export const updateFuelRecord = async (req, res, next) => {
     }
 
     const { vehicleId, date, quantity, cost } = req.body;
+    const oldPeriod = periodFromDate(record.date);
     if (vehicleId !== undefined) {
       if (!isValidId(vehicleId)) return res.status(400).json({ message: "Vehicle ID is invalid" });
       const vehicle = await findOwnedVehicle(vehicleId, req.user);
@@ -116,6 +120,11 @@ export const updateFuelRecord = async (req, res, next) => {
     }
 
     await record.save();
+    const newPeriod = periodFromDate(record.date);
+    await syncBudgetExceededNotification(req.user._id, oldPeriod.year, oldPeriod.month);
+    if (oldPeriod.year !== newPeriod.year || oldPeriod.month !== newPeriod.month) {
+      await syncBudgetExceededNotification(req.user._id, newPeriod.year, newPeriod.month);
+    }
     await record.populate("vehicleId", "vehicleName registrationNumber");
     res.json({ message: "Fuel record updated successfully", record });
   } catch (error) {
@@ -130,7 +139,9 @@ export const deleteFuelRecord = async (req, res, next) => {
     if (!record || !(await findOwnedVehicle(record.vehicleId, req.user))) {
       return res.status(404).json({ message: "Fuel record not found" });
     }
+    const period = periodFromDate(record.date);
     await record.deleteOne();
+    await syncBudgetExceededNotification(req.user._id, period.year, period.month);
     res.json({ message: "Fuel record removed successfully" });
   } catch (error) {
     next(error);
