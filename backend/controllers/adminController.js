@@ -3,6 +3,10 @@ import Vehicle from "../models/Vehicle.js";
 import { isValidContactNumber, isValidEmail, isPositiveNumber, isValidYear } from "../utils/validation.js";
 import { syncNotificationsForVehicle } from "../services/notificationService.js";
 
+const isOwnAdminAccount = (req) =>
+  String(req.params.id).toLowerCase() === String(req.user._id).toLowerCase();
+const selfManageMessage = "You cannot manage your own account from Manage Users. Use Profile instead.";
+
 // GET /api/admin-only
 export const getAdminAccess = async (req, res, next) => {
   try {
@@ -15,27 +19,36 @@ export const getAdminAccess = async (req, res, next) => {
 
 // GET /api/admin/stats
 export const getAdminStats = async (req, res, next) => {
-
   try {
-    const totalUsers = await User.countDocuments();
-    const totalAdmins = await User.countDocuments({ role: "Admin" });
-    const totalIndividuals = await User.countDocuments({ role: "Individual" });
-    const totalVehicles = await Vehicle.countDocuments();
-
-    const petrolVehicles = await Vehicle.countDocuments({ fuelType: "Petrol" });
-    const dieselVehicles = await Vehicle.countDocuments({ fuelType: "Diesel" });
-    const electricVehicles = await Vehicle.countDocuments({ fuelType: "Electric" });
+    const [totalUsers, totalAdmins, totalIndividuals, totalOrganizational,
+      totalVehicles, petrolVehicles, dieselVehicles, electricVehicles,
+      recentUsers, recentVehicles] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ role: "Admin" }),
+      User.countDocuments({ role: "Individual" }),
+      User.countDocuments({ role: "Organizational" }),
+      Vehicle.countDocuments(),
+      Vehicle.countDocuments({ fuelType: "Petrol" }),
+      Vehicle.countDocuments({ fuelType: "Diesel" }),
+      Vehicle.countDocuments({ fuelType: "Electric" }),
+      User.find().select("fullName email role createdAt").sort({ createdAt: -1, _id: -1 }).limit(5),
+      Vehicle.find().select("vehicleName registrationNumber fuelType userId createdAt")
+        .sort({ createdAt: -1, _id: -1 }).limit(5).populate("userId", "fullName email"),
+    ]);
 
     res.json({
       stats: {
         totalUsers,
         totalAdmins,
         totalIndividuals,
+        totalOrganizational,
         totalVehicles,
         petrolVehicles,
         dieselVehicles,
         electricVehicles,
       },
+      recentUsers,
+      recentVehicles,
     });
   } catch (error) {
     next(error);
@@ -46,16 +59,17 @@ export const getAdminStats = async (req, res, next) => {
 export const getUsers = async (req, res, next) => {
   try {
     const { search } = req.query;
-    let query = {};
+    const query = { _id: { $ne: req.user._id } };
 
     if (search && String(search).trim()) {
-      const regex = new RegExp(String(search).trim(), "i");
-      query = {
-        $or: [{ fullName: regex }, { email: regex }, { contactNumber: regex }],
-      };
+      const escaped = String(search).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "i");
+      query.$or = [{ fullName: regex }, { email: regex }, { contactNumber: regex }];
     }
 
-    const users = await User.find(query).select("-password").sort({ createdAt: -1 });
+    const users = await User.find(query)
+      .select("fullName email contactNumber role createdAt updatedAt")
+      .sort({ createdAt: -1, _id: -1 });
 
     // Aggregate vehicle count per user
     const vehicleCounts = await Vehicle.aggregate([
@@ -81,7 +95,11 @@ export const getUsers = async (req, res, next) => {
 // GET /api/admin/users/:id
 export const getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    if (isOwnAdminAccount(req)) {
+      return res.status(400).json({ message: selfManageMessage });
+    }
+    const user = await User.findById(req.params.id)
+      .select("fullName email contactNumber role createdAt updatedAt");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -100,8 +118,8 @@ export const getUserById = async (req, res, next) => {
 // PUT /api/admin/users/:id
 export const updateUser = async (req, res, next) => {
   try {
-    if (String(req.params.id) === String(req.user._id)) {
-      return res.status(400).json({ message: "Use your profile page to update your own account" });
+    if (isOwnAdminAccount(req)) {
+      return res.status(400).json({ message: selfManageMessage });
     }
 
     const { fullName, email, contactNumber, role } = req.body;
@@ -171,8 +189,8 @@ export const updateUser = async (req, res, next) => {
 // DELETE /api/admin/users/:id
 export const deleteUser = async (req, res, next) => {
   try {
-    if (String(req.params.id) === String(req.user._id)) {
-      return res.status(400).json({ message: "You cannot delete your own admin account" });
+    if (isOwnAdminAccount(req)) {
+      return res.status(400).json({ message: selfManageMessage });
     }
 
     const user = await User.findById(req.params.id);
@@ -204,7 +222,7 @@ export const getAdminVehicles = async (req, res, next) => {
 
     let vehicles = await Vehicle.find(query)
       .populate("userId", "fullName email contactNumber role")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1, _id: -1 });
 
     if (search && String(search).trim()) {
       const q = String(search).trim().toLowerCase();

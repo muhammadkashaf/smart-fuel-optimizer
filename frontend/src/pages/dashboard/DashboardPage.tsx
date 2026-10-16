@@ -126,14 +126,14 @@ export default function DashboardPage() {
                     <VehicleBadge fuel={v.fuelType} />
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-line-subtle pt-3 text-xs">
-                    <span className="font-mono rounded bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line-subtle pt-3 text-xs">
+                    <span className="min-w-0 break-all rounded bg-slate-100 px-2 py-0.5 font-mono font-medium text-slate-700">
                       {v.registrationNumber}
                     </span>
                     <div className="flex items-center gap-1 text-content-muted">
                       <Gauge className="h-3.5 w-3.5" />
                       <span className="font-medium tabular-nums text-slate-700">
-                        {v.fuelEfficiency} km/L
+                        {v.fuelEfficiency} {v.fuelType === 'Electric' ? 'km/kWh' : 'km/L'}
                       </span>
                     </div>
                   </div>

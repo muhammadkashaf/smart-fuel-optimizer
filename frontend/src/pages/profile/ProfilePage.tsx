@@ -214,7 +214,7 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between">
                     <span className="field-label text-slate-500 block">Email address</span>
                   </div>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                  <p className="mt-1 break-all text-sm font-semibold text-slate-900">
                     {profile.email}
                   </p>
                 </div>

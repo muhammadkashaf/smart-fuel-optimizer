@@ -9,7 +9,7 @@ export default function IndividualRoute() {
   }
 
   if (user?.role !== 'Individual' && user?.role !== 'Organizational') {
-    return <Navigate to={user?.role === 'Admin' ? '/admin/users' : '/login'} replace />;
+    return <Navigate to={user?.role === 'Admin' ? '/admin' : '/login'} replace />;
   }
 
   return <Outlet />;

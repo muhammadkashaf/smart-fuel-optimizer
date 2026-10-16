@@ -11,7 +11,7 @@ export const registerSchema = z
     fullName: z.string().min(2, 'Enter your full name'),
     email: z.string().email('Enter a valid email'),
     contactNumber: z.string().regex(phoneRegex, 'Enter a valid contact number'),
-    role: z.enum(['Individual', 'Organizational', 'Admin']),
+    role: z.enum(['Individual', 'Organizational']),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')

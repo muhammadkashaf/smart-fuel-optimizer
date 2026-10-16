@@ -21,6 +21,7 @@ export type Vehicle = {
   fuelTankCapacity: number;
   userId?:
     | string
+    | null
     | {
         _id: string;
         id?: string;
@@ -160,8 +161,15 @@ export type AdminStats = {
   totalUsers: number;
   totalAdmins: number;
   totalIndividuals: number;
+  totalOrganizational: number;
   totalVehicles: number;
   petrolVehicles: number;
   dieselVehicles: number;
   electricVehicles: number;
+};
+
+export type AdminOverview = {
+  stats: AdminStats;
+  recentUsers: Pick<User, '_id' | 'fullName' | 'email' | 'role' | 'createdAt'>[];
+  recentVehicles: Pick<Vehicle, '_id' | 'vehicleName' | 'registrationNumber' | 'fuelType' | 'userId' | 'createdAt'>[];
 };

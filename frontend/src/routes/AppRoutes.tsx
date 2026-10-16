@@ -23,6 +23,7 @@ import EditTripPage from '@/pages/trips/EditTripPage';
 import ProfilePage from '@/pages/profile/ProfilePage';
 import AdminUsersPage from '@/pages/admin/AdminUsersPage';
 import AdminVehiclesPage from '@/pages/admin/AdminVehiclesPage';
+import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -33,7 +34,7 @@ const NotificationsPage = lazy(() => import('@/pages/notifications/Notifications
 function RoleAwareRedirect() {
   const { user, isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <Navigate to={user?.role === 'Admin' ? '/admin/users' : '/dashboard'} replace />;
+  return <Navigate to={user?.role === 'Admin' ? '/admin' : '/dashboard'} replace />;
 }
 
 export default function AppRoutes() {
@@ -57,7 +58,7 @@ export default function AppRoutes() {
       />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          {/* Individual-only routes — Admin gets redirected to /admin/users */}
+          {/* Member-only routes redirect Admin to the system overview */}
           <Route element={<IndividualRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/analytics" element={<Suspense fallback={<PageSkeleton />}><AnalyticsPage /></Suspense>} />
@@ -81,9 +82,9 @@ export default function AppRoutes() {
 
           {/* Admin-only routes — Individual gets redirected to /dashboard */}
           <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminDashboardPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/vehicles" element={<AdminVehiclesPage />} />
-            <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
           </Route>
         </Route>
       </Route>

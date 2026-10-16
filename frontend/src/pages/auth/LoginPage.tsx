@@ -25,7 +25,7 @@ export default function LoginPage() {
       login(data.token, data.user);
       reset();
       toast.success(data.message);
-      navigate(data.user.role === 'Admin' ? '/admin/users' : '/dashboard');
+      navigate(data.user.role === 'Admin' ? '/admin' : '/dashboard');
     } catch (e) {
       toast.error(getErrorMessage(e));
     }

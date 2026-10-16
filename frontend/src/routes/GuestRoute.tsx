@@ -5,7 +5,7 @@ export default function GuestRoute({ children }: { children: React.ReactNode }) 
   const { isAuthenticated, user } = useAuth();
 
   if (isAuthenticated) {
-    return <Navigate to={user?.role === 'Admin' ? '/admin/users' : '/dashboard'} replace />;
+    return <Navigate to={user?.role === 'Admin' ? '/admin' : '/dashboard'} replace />;
   }
 
   return children;

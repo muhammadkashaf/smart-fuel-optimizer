@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CarFront,
   Search,
-  SlidersHorizontal,
   Edit3,
   Trash2,
   X,
@@ -51,10 +50,12 @@ export default function AdminVehiclesPage() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(vehicleSchema),
   });
+  const editingElectric = useWatch({ control, name: 'fuelType' }) === 'Electric';
 
   const loadVehicles = async () => {
     setLoading(true);
@@ -143,7 +144,7 @@ export default function AdminVehiclesPage() {
   };
 
   if (loading) return <PageSkeleton />;
-  if (error && !vehicles.length) return <ErrorState message={error} retry={loadVehicles} />;
+  if (error) return <ErrorState message={error} retry={loadVehicles} />;
 
   return (
     <div className="space-y-6">
@@ -155,7 +156,7 @@ export default function AdminVehiclesPage() {
 
       {/* Search & Fuel Filter Toolbar */}
       <div className="app-panel p-3.5 sm:p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           {/* Search Field */}
           <div className="relative min-w-0 flex-1">
             <Search
@@ -181,32 +182,14 @@ export default function AdminVehiclesPage() {
           </div>
 
           {/* Fuel Filter Dropdown */}
-          <div className="relative sm:w-52">
-            <SlidersHorizontal
-              aria-hidden="true"
-              className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
-            />
-            <select
-              aria-label="Filter by fuel type"
-              value={fuelFilter}
-              onChange={(e) => setFuelFilter(e.target.value)}
-              className="h-10 w-full cursor-pointer appearance-none rounded-lg border border-line bg-slate-50/50 pl-9 pr-9 text-sm font-medium text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-accent focus:bg-white focus:ring-3 focus:ring-accent/15"
-            >
+          <div className="min-w-0 sm:w-52">
+            <Select label="Fuel type" value={fuelFilter} onChange={(e) => setFuelFilter(e.target.value)}>
               {FUEL_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type === 'All' ? 'All fuel types' : `${type} only`}
                 </option>
               ))}
-            </select>
-            <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.51a.75.75 0 01-1.08 0l-4.25-4.51a.75.75 0 01.02-1.06z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
+            </Select>
           </div>
         </div>
       </div>
@@ -214,8 +197,8 @@ export default function AdminVehiclesPage() {
       {/* Vehicles Table Panel */}
       <div className="app-panel overflow-hidden">
         {/* Table info bar */}
-        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3.5">
+          <div className="flex min-w-0 items-center gap-2">
             <div className="grid h-7 w-7 place-items-center rounded-md bg-slate-100 text-slate-600">
               <CarFront className="h-4 w-4" />
             </div>
@@ -266,8 +249,8 @@ export default function AdminVehiclesPage() {
             </div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <div className="max-w-full overflow-x-auto">
+            <table className="w-full min-w-[830px] text-left text-sm">
               <thead>
                 <tr className="border-b border-line bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
                   <th className="px-5 py-3.5">Vehicle</th>
@@ -275,7 +258,7 @@ export default function AdminVehiclesPage() {
                   <th className="px-4 py-3.5">Owner</th>
                   <th className="px-4 py-3.5">Fuel Type</th>
                   <th className="px-4 py-3.5">Efficiency</th>
-                  <th className="px-4 py-3.5">Tank Capacity</th>
+                  <th className="px-4 py-3.5">Capacity</th>
                   <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
@@ -284,8 +267,8 @@ export default function AdminVehiclesPage() {
                   const owner = typeof v.userId === 'object' ? v.userId : null;
                   return (
                     <tr key={v._id} className="transition-colors hover:bg-slate-50/70">
-                      <td className="px-5 py-4">
-                        <div className="font-semibold text-slate-900">{v.vehicleName}</div>
+                      <td className="max-w-52 px-5 py-4">
+                        <div className="break-words font-semibold text-slate-900">{v.vehicleName}</div>
                         <div className="text-xs text-content-muted mt-0.5">
                           {v.manufacturer} · {v.modelYear}
                         </div>
@@ -295,14 +278,14 @@ export default function AdminVehiclesPage() {
                           {v.registrationNumber}
                         </span>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="max-w-48 px-4 py-4">
                         {owner ? (
                           <div className="min-w-0">
-                            <div className="text-xs font-semibold text-slate-900">{owner.fullName}</div>
-                            <div className="text-[11px] text-content-muted truncate">{owner.email}</div>
+                            <div className="break-words text-xs font-semibold text-slate-900">{owner.fullName}</div>
+                            <div className="break-all text-[11px] text-content-muted">{owner.email}</div>
                           </div>
                         ) : (
-                          <span className="text-xs text-content-muted">System / Unknown</span>
+                          <span className="text-xs text-content-muted">Unknown / deleted user</span>
                         )}
                       </td>
                       <td className="px-4 py-4">
@@ -310,12 +293,12 @@ export default function AdminVehiclesPage() {
                       </td>
                       <td className="px-4 py-4">
                         <span className="font-medium tabular-nums text-slate-800">
-                          {v.fuelEfficiency} <span className="text-xs text-slate-500 font-normal">km/L</span>
+                          {v.fuelEfficiency} <span className="text-xs text-slate-500 font-normal">{v.fuelType === 'Electric' ? 'km/kWh' : 'km/L'}</span>
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <span className="font-medium tabular-nums text-slate-800">
-                          {v.fuelTankCapacity} <span className="text-xs text-slate-500 font-normal">L</span>
+                          {v.fuelTankCapacity} <span className="text-xs text-slate-500 font-normal">{v.fuelType === 'Electric' ? 'kWh' : 'L'}</span>
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -359,8 +342,8 @@ export default function AdminVehiclesPage() {
                 <p className="text-xs text-content-muted mt-0.5">
                   Owner:{' '}
                   {typeof editingVehicle.userId === 'object'
-                    ? editingVehicle.userId?.fullName
-                    : 'System'}
+                    ? editingVehicle.userId?.fullName || 'Unknown / deleted user'
+                    : 'Unknown / deleted user'}
                 </p>
               </div>
               <button
@@ -413,7 +396,7 @@ export default function AdminVehiclesPage() {
                   <option value="Electric">Electric</option>
                 </Select>
                 <Input
-                  label="Efficiency (km/L)"
+                  label={editingElectric ? 'Efficiency (km/kWh)' : 'Efficiency (km/L)'}
                   type="number"
                   step="0.1"
                   placeholder="14.5"
@@ -421,7 +404,7 @@ export default function AdminVehiclesPage() {
                   {...register('fuelEfficiency', { valueAsNumber: true })}
                 />
                 <Input
-                  label="Tank (L)"
+                  label={editingElectric ? 'Battery capacity (kWh)' : 'Tank capacity (L)'}
                   type="number"
                   step="0.1"
                   placeholder="55.0"

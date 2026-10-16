@@ -196,7 +196,7 @@ export default function VehicleListPage() {
                     <th className="px-4 py-3.5">Registration</th>
                     <th className="px-4 py-3.5">Fuel Type</th>
                     <th className="px-4 py-3.5">Efficiency</th>
-                    <th className="px-4 py-3.5">Tank Capacity</th>
+                    <th className="px-4 py-3.5">Capacity</th>
                     <th className="px-5 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -222,12 +222,12 @@ export default function VehicleListPage() {
                       </td>
                       <td className="px-4 py-4">
                         <span className="font-medium tabular-nums text-slate-800">
-                          {v.fuelEfficiency} <span className="text-xs text-slate-500 font-normal">km/L</span>
+                          {v.fuelEfficiency} <span className="text-xs text-slate-500 font-normal">{v.fuelType === 'Electric' ? 'km/kWh' : 'km/L'}</span>
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <span className="font-medium tabular-nums text-slate-800">
-                          {v.fuelTankCapacity} <span className="text-xs text-slate-500 font-normal">L</span>
+                          {v.fuelTankCapacity} <span className="text-xs text-slate-500 font-normal">{v.fuelType === 'Electric' ? 'kWh' : 'L'}</span>
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -255,16 +255,16 @@ export default function VehicleListPage() {
                     <VehicleBadge fuel={v.fuelType} />
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg bg-slate-50 p-2.5 text-xs text-slate-700">
-                    <span className="font-mono font-medium">{v.registrationNumber}</span>
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-2.5 text-xs text-slate-700">
+                    <span className="min-w-0 break-all font-mono font-medium">{v.registrationNumber}</span>
+                    <div className="flex flex-wrap items-center gap-3">
                       <span className="flex items-center gap-1">
                         <Fuel className="h-3 w-3 text-slate-400" />
-                        <span className="font-medium tabular-nums">{v.fuelEfficiency} km/L</span>
+                        <span className="font-medium tabular-nums">{v.fuelEfficiency} {v.fuelType === 'Electric' ? 'km/kWh' : 'km/L'}</span>
                       </span>
                       <span className="flex items-center gap-1">
                         <Gauge className="h-3 w-3 text-slate-400" />
-                        <span className="font-medium tabular-nums">{v.fuelTankCapacity} L</span>
+                        <span className="font-medium tabular-nums">{v.fuelTankCapacity} {v.fuelType === 'Electric' ? 'kWh' : 'L'}</span>
                       </span>
                     </div>
                   </div>

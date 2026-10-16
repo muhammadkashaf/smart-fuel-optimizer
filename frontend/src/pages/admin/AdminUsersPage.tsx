@@ -32,27 +32,21 @@ import {
 } from '@/components/common';
 import VehicleBadge from '@/components/vehicles/VehicleBadge';
 import { adminUserEditSchema, type AdminUserEditFormData } from '@/schemas/adminSchemas';
-import { useAuth } from '@/hooks/useAuth';
 import { getErrorMessage } from '@/utils/errorHandler';
 import type { User, Vehicle } from '@/types';
 
 export default function AdminUsersPage() {
-  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('All');
 
   // Modals state
   const [viewingUser, setViewingUser] = useState<{ user: User; vehicles: Vehicle[] } | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-
-  const currentUserId = currentUser?.id || currentUser?._id;
-  const isCurrentUser = (user: User) =>
-    Boolean(currentUserId && String(user.id || user._id) === String(currentUserId));
-
 
   // Edit Form Hook
   const {
@@ -83,16 +77,14 @@ export default function AdminUsersPage() {
 
   // Filtered list
   const filteredUsers = useMemo(() => {
-    if (!search.trim()) return users;
-    const q = search.toLowerCase();
-    return users.filter(
-      (u) =>
-        u.fullName?.toLowerCase().includes(q) ||
-        u.email?.toLowerCase().includes(q) ||
-        u.contactNumber?.toLowerCase().includes(q) ||
-        u.role?.toLowerCase().includes(q),
+    const q = search.trim().toLowerCase();
+    return users.filter((u) =>
+      (roleFilter === 'All' || u.role === roleFilter) &&
+      (!q || u.fullName?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)),
     );
-  }, [users, search]);
+  }, [users, search, roleFilter]);
+
+  const resetFilters = () => { setSearch(''); setRoleFilter('All'); };
 
   // Open Edit Modal
   const openEditModal = (user: User) => {
@@ -148,19 +140,19 @@ export default function AdminUsersPage() {
   };
 
   if (loading) return <PageSkeleton />;
-  if (error && !users.length) return <ErrorState message={error} retry={loadUsers} />;
+  if (error) return <ErrorState message={error} retry={loadUsers} />;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <PageHeader
         title="Manage Users"
-        subtitle="View, inspect, update, and manage all registered user accounts in the system."
+        subtitle="View and manage other registered accounts. Update your own details in Profile."
       />
 
       {/* Search Bar Toolbar */}
-      <div className="app-panel p-3.5 sm:p-4">
-        <div className="relative">
+      <div className="app-panel grid gap-3 p-3.5 sm:grid-cols-[minmax(0,1fr)_13rem] sm:items-end sm:p-4">
+        <div className="relative min-w-0">
           <Search
             aria-hidden="true"
             className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -169,7 +161,8 @@ export default function AdminUsersPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search users by name, email, contact number, or role..."
+            placeholder="Search by name or email..."
+            aria-label="Search users by name or email"
             className="h-10 w-full rounded-lg border border-line bg-slate-50/50 pl-10 pr-9 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-accent focus:bg-white focus:ring-3 focus:ring-accent/15"
           />
           {search && (
@@ -182,26 +175,32 @@ export default function AdminUsersPage() {
             </button>
           )}
         </div>
+        <Select label="Role" value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
+          <option value="All">All roles</option>
+          <option value="Individual">Individual</option>
+          <option value="Organizational">Organizational</option>
+          <option value="Admin">Admin</option>
+        </Select>
       </div>
 
       {/* Users Table Panel */}
       <div className="app-panel overflow-hidden">
         {/* Table info bar */}
-        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3.5">
+          <div className="flex min-w-0 items-center gap-2">
             <div className="grid h-7 w-7 place-items-center rounded-md bg-slate-100 text-slate-600">
               <Users className="h-4 w-4" />
             </div>
             <span className="text-xs font-semibold text-slate-700">
-              Showing {filteredUsers.length} of {users.length} registered user{users.length === 1 ? '' : 's'}
+              Showing {filteredUsers.length} of {users.length} manageable user{users.length === 1 ? '' : 's'}
             </span>
           </div>
-          {search && (
+          {(search || roleFilter !== 'All') && (
             <button
-              onClick={() => setSearch('')}
+              onClick={resetFilters}
               className="text-xs font-medium text-accent hover:text-accent-strong transition-colors"
             >
-              Clear search
+              Reset filters
             </button>
           )}
         </div>
@@ -209,8 +208,8 @@ export default function AdminUsersPage() {
         {users.length === 0 ? (
           <div className="p-8">
             <EmptyState
-              title="No users registered"
-              description="No user accounts are currently registered in the database."
+              title="No other users to manage"
+              description="Other registered accounts will appear here. Manage your own details in Profile."
             />
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -220,17 +219,17 @@ export default function AdminUsersPage() {
             </div>
             <h3 className="mt-3 text-sm font-semibold text-slate-900">No matching users found</h3>
             <p className="mt-1 text-xs text-content-muted">
-              No registered users match your search query "{search}".
+              No manageable users match the selected search and role.
             </p>
             <div className="mt-4">
-              <Button variant="secondary" size="sm" onClick={() => setSearch('')}>
-                Clear search
+              <Button variant="secondary" size="sm" onClick={resetFilters}>
+                Reset filters
               </Button>
             </div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <div className="max-w-full overflow-x-auto">
+            <table className="w-full min-w-[780px] text-left text-sm">
               <thead>
                 <tr className="border-b border-line bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
                   <th className="px-5 py-3.5">User</th>
@@ -244,21 +243,14 @@ export default function AdminUsersPage() {
               <tbody className="divide-y divide-line/70">
                 {filteredUsers.map((u) => (
                   <tr key={u.id || u._id} className="transition-colors hover:bg-slate-50/70">
-                    <td className="px-5 py-4">
+                    <td className="max-w-60 px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="grid h-8 w-8 place-items-center rounded-full bg-slate-900 text-xs font-bold text-white shrink-0">
                           {u.fullName?.slice(0, 1).toUpperCase() || 'U'}
                         </div>
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-slate-900 truncate">{u.fullName}</span>
-                            {isCurrentUser(u) && (
-                              <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                                Current account
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-content-muted truncate">{u.email}</div>
+                          <div className="break-words font-semibold text-slate-900">{u.fullName}</div>
+                          <div className="break-all text-xs text-content-muted">{u.email}</div>
                         </div>
                       </div>
                     </td>
@@ -299,26 +291,22 @@ export default function AdminUsersPage() {
                         >
                           <Info className="h-3.5 w-3.5" />
                         </button>
-                        {!isCurrentUser(u) && (
-                          <>
-                            <button
-                              onClick={() => openEditModal(u)}
-                              aria-label={`Edit ${u.fullName}`}
-                              className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                              title="Edit user details"
-                            >
-                              <Edit3 className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={() => setDeletingUser(u)}
-                              aria-label={`Delete ${u.fullName}`}
-                              className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-danger transition-colors"
-                              title="Delete user account"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </>
-                        )}
+                        <button
+                          onClick={() => openEditModal(u)}
+                          aria-label={`Edit ${u.fullName}`}
+                          className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                          title="Edit user details"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingUser(u)}
+                          aria-label={`Delete ${u.fullName}`}
+                          className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-danger transition-colors"
+                          title="Delete user account"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -342,7 +330,7 @@ export default function AdminUsersPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">{viewingUser.user.fullName}</h2>
-                  <p className="text-xs text-content-muted">{viewingUser.user.email}</p>
+                  <p className="break-all text-xs text-content-muted">{viewingUser.user.email}</p>
                 </div>
               </div>
               <button
@@ -402,12 +390,12 @@ export default function AdminUsersPage() {
                   {viewingUser.vehicles.map((veh) => (
                     <div
                       key={veh._id}
-                      className="flex items-center justify-between p-3.5 rounded-xl border border-line bg-white shadow-xs"
+                      className="flex min-w-0 flex-wrap items-center justify-between gap-2 p-3.5 rounded-xl border border-line bg-white shadow-xs"
                     >
-                      <div>
-                        <span className="text-sm font-semibold text-slate-900">{veh.vehicleName}</span>
+                      <div className="min-w-0">
+                        <span className="block break-words text-sm font-semibold text-slate-900">{veh.vehicleName}</span>
                         <div className="text-xs text-content-muted mt-0.5">
-                          {veh.manufacturer} · {veh.modelYear} · {veh.fuelEfficiency} km/L · {veh.fuelTankCapacity} L
+                          {veh.manufacturer} · {veh.modelYear} · {veh.fuelEfficiency} {veh.fuelType === 'Electric' ? 'km/kWh' : 'km/L'} · {veh.fuelTankCapacity} {veh.fuelType === 'Electric' ? 'kWh' : 'L'}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -440,7 +428,7 @@ export default function AdminUsersPage() {
             <div className="flex items-center justify-between border-b border-line pb-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">Edit User Account</h2>
-                <p className="text-xs text-content-muted mt-0.5">{editingUser.email}</p>
+                <p className="mt-0.5 break-all text-xs text-content-muted">{editingUser.email}</p>
               </div>
               <button
                 onClick={() => setEditingUser(null)}

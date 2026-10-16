@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BarChart3, CalendarDays, CarFront, Fuel, LayoutDashboard, LogOut, Menu, UserRound, X, Layers, Users, ShieldAlert, ShieldCheck, Wallet } from 'lucide-react';
+import { BarChart3, CalendarDays, CarFront, Fuel, LayoutDashboard, LogOut, Menu, UserRound, X, Layers, Users, ShieldCheck, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -49,6 +49,7 @@ export default function AppLayout() {
           onClick={() => setOpen(false)}
           key={to}
           to={to}
+          end={to === '/admin'}
           className={({ isActive }) =>
             `group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
               isActive
@@ -108,9 +109,9 @@ export default function AppLayout() {
                 { to: '/vehicles', label: 'My Vehicles', Icon: CarFront },
                 { to: '/fuel-records', label: 'Fuel Records', Icon: Fuel },
                 { to: '/fuel-budget', label: 'Fuel Budget', Icon: Wallet },
-                { to: '/analytics', label: 'Analytics', Icon: BarChart3 },
                 { to: '/trips', label: 'Trips', Icon: CalendarDays },
                 { to: '/crisis-mode', label: 'Crisis Mode', Icon: ShieldCheck },
+                { to: '/analytics', label: 'Analytics', Icon: BarChart3 },
                 { to: '/profile', label: 'Profile', Icon: UserRound },
               ])}
             </div>
@@ -122,8 +123,9 @@ export default function AppLayout() {
                 Admin Panel
               </p>
               {renderNavLinks([
+                { to: '/admin', label: 'Dashboard', Icon: LayoutDashboard },
                 { to: '/admin/users', label: 'Manage Users', Icon: Users },
-                { to: '/admin/vehicles', label: 'Manage Vehicles', Icon: ShieldAlert },
+                { to: '/admin/vehicles', label: 'Manage Vehicles', Icon: CarFront },
                 { to: '/profile', label: 'Profile', Icon: UserRound },
               ])}
             </div>
@@ -163,7 +165,7 @@ export default function AppLayout() {
             <Menu className="h-5 w-5" />
           </button>
 
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex min-w-0 items-center gap-3 sm:gap-4">
             {!isAdmin && <NotificationBell unreadCount={unreadCount} onCountChange={setUnreadCount} />}
             <div className="hidden items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-50/80 px-2.5 py-1 text-xs font-medium text-emerald-700 sm:inline-flex">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -173,8 +175,8 @@ export default function AppLayout() {
             <div className="hidden h-5 w-px bg-line sm:block" />
 
             <div className="flex items-center gap-3">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-semibold text-slate-900 leading-tight">
+              <div className="min-w-0 max-w-28 text-right sm:max-w-none">
+                <p className="truncate text-sm font-semibold text-slate-900 leading-tight">
                   {user?.fullName}
                 </p>
                 <p className="text-xs text-content-muted leading-tight mt-0.5">{user?.role}</p>
@@ -187,7 +189,7 @@ export default function AppLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
+        <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <Outlet />
         </main>
       </div>

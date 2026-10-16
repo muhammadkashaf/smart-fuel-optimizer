@@ -1,5 +1,5 @@
 import api from './axios';
-import type { User, Vehicle, AdminStats } from '@/types';
+import type { User, Vehicle, AdminOverview } from '@/types';
 
 type UsersResponse = {
   users: User[];
@@ -20,11 +20,7 @@ type AdminVehicleResponse = {
   message?: string;
 };
 
-type StatsResponse = {
-  stats: AdminStats;
-};
-
-export const getAdminStats = () => api.get<StatsResponse>('/admin/stats');
+export const getAdminStats = () => api.get<AdminOverview>('/admin/stats');
 
 export const getAdminUsers = (search?: string) =>
   api.get<UsersResponse>('/admin/users', {
