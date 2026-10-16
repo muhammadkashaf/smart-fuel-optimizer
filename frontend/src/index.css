@@ -3,8 +3,9 @@
 
 /* Smart Fuel design tokens: the only visual source of truth for the app. */
 @theme {
-  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --color-canvas: #f8fafc;
+  --font-sans:
+    'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --color-canvas: #f3f5f9;
   --color-surface: #ffffff;
   --color-surface-muted: #f1f5f9;
   --color-sidebar: #090d16;
@@ -30,9 +31,9 @@
   --color-warning: #d97706;
   --color-warning-soft: #fffbeb;
   --color-warning-border: #fde68a;
-  --radius-control: 0.5rem;
+  --radius-control: 0.5625rem;
   --radius-panel: 0.75rem;
-  --radius-card: 0.875rem;
+  --radius-card: 1rem;
   --shadow-card: 0 1px 3px 0 rgb(15 23 42 / 0.05), 0 1px 2px -1px rgb(15 23 42 / 0.05);
   --shadow-panel: 0 1px 3px 0 rgb(15 23 42 / 0.04), 0 6px 16px -2px rgb(15 23 42 / 0.03);
   --shadow-overlay: 0 20px 25px -5px rgb(15 23 42 / 0.1), 0 8px 10px -6px rgb(15 23 42 / 0.1);
@@ -76,6 +77,78 @@ button:not(:disabled) {
 
 .app-panel {
   @apply rounded-card border border-line bg-surface shadow-card;
+}
+
+.dashboard-link {
+  @apply inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-accent transition-colors hover:text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
+}
+
+.dashboard-enter {
+  animation: dashboard-enter 420ms ease-out both;
+}
+.notification-enter {
+  animation: notification-enter 160ms ease-out both;
+}
+.spending-line {
+  stroke-dasharray: 1;
+  animation: spending-draw 650ms ease-out both;
+}
+
+.analytics-bar-rise {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: analytics-bar-rise 650ms ease-out both;
+}
+
+.analytics-bar-grow {
+  transform-origin: left center;
+  animation: analytics-bar-grow 650ms ease-out both;
+}
+
+@keyframes analytics-bar-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes analytics-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes dashboard-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes notification-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes spending-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .app-panel-muted {

@@ -22,7 +22,8 @@ export default function FuelRecordForm({
   } = useForm<FuelRecordFormValues>({
     resolver: zodResolver(fuelRecordSchema),
     defaultValues: {
-      vehicleId: typeof record?.vehicleId === 'string' ? record.vehicleId : record?.vehicleId._id ?? '',
+      vehicleId:
+        typeof record?.vehicleId === 'string' ? record.vehicleId : (record?.vehicleId._id ?? ''),
       date: record?.date.slice(0, 10) ?? '',
       quantity: record?.quantity,
       cost: record?.cost,
@@ -30,19 +31,21 @@ export default function FuelRecordForm({
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <section className="app-panel p-5 sm:p-7">
-        <div className="flex items-center gap-3 border-b border-line pb-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="app-panel min-w-0">
+      <section className="p-5 sm:p-6">
+        <div className="flex items-center gap-3 pb-1">
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-amber-50 text-amber-600">
             <Fuel className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Fuel purchase details</h2>
-            <p className="text-xs text-content-muted">Record the vehicle, purchase date, liters, and amount paid.</p>
+            <h2 className="text-base font-semibold text-slate-900">Purchase details</h2>
+            <p className="text-xs text-content-muted">
+              Record the vehicle, purchase date, liters, and amount paid.
+            </p>
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="mt-5 grid gap-x-5 gap-y-5 sm:grid-cols-2">
           <Select label="Vehicle" error={errors.vehicleId?.message} {...register('vehicleId')}>
             <option value="">Select a vehicle</option>
             {vehicles.map((vehicle) => (
@@ -51,13 +54,19 @@ export default function FuelRecordForm({
               </option>
             ))}
           </Select>
-          <Input label="Purchase date" type="date" error={errors.date?.message} {...register('date')} />
+          <Input
+            label="Purchase date"
+            type="date"
+            error={errors.date?.message}
+            {...register('date')}
+          />
           <Input
             label="Quantity (liters)"
             type="number"
             min="0"
             step="any"
             placeholder="e.g. 35.5"
+            hint="Liters purchased, as shown on your receipt"
             error={errors.quantity?.message}
             {...register('quantity', { valueAsNumber: true })}
           />
@@ -67,15 +76,18 @@ export default function FuelRecordForm({
             min="0"
             step="any"
             placeholder="e.g. 9500"
+            hint="Total amount paid in PKR"
             error={errors.cost?.message}
             {...register('cost', { valueAsNumber: true })}
           />
         </div>
       </section>
 
-      <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 rounded-b-card border-t border-line bg-slate-50/60 p-5 sm:px-6">
         <Link to="/fuel-records">
-          <Button variant="secondary" type="button">Cancel</Button>
+          <Button variant="secondary" type="button">
+            Cancel
+          </Button>
         </Link>
         <Button type="submit" disabled={isSubmitting} className="min-w-36">
           {isSubmitting && <Spinner />}

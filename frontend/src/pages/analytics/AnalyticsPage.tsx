@@ -1,17 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, Fuel, Plus, RotateCcw, TrendingUp } from 'lucide-react';
+import { BarChart3, Fuel, ListFilter, Plus, ReceiptText, RotateCcw, Wallet } from 'lucide-react';
 import { getFuelRecords } from '@/api/fuelRecordApi';
 import { getVehicles } from '@/api/vehicleApi';
-import { Button, EmptyState, ErrorState, PageHeader, PageSkeleton, Select } from '@/components/common';
+import { formatPkr } from '@/components/budgets/BudgetOverview';
+import { Button, EmptyState, ErrorState, PageHeader, Select, Skeleton } from '@/components/common';
+import {
+  FuelCostChart,
+  FuelQuantityChart,
+  VehicleComparisonChart,
+  formatLiters,
+} from '@/components/analytics/AnalyticsCharts';
+import VehicleBadge from '@/components/vehicles/VehicleBadge';
 import type { FuelRecord, Vehicle } from '@/types';
-import { calculateAnalytics, type FuelTypeFilter, type MonthRange, type MonthlyTotal } from '@/utils/analytics';
+import { calculateAnalytics, type FuelTypeFilter, type MonthRange } from '@/utils/analytics';
+import { selectLiterRecords } from '@/utils/analyticsDisplay';
 import { getErrorMessage } from '@/utils/errorHandler';
 
-const money = new Intl.NumberFormat('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const liters = new Intl.NumberFormat('en-PK', { maximumFractionDigits: 2 });
-const compact = new Intl.NumberFormat('en-PK', { notation: 'compact', maximumFractionDigits: 1 });
-const formatMoney = (value: number) => `PKR ${money.format(value)}`;
+const fuelTypes = ['Petrol', 'Diesel', 'Electric'] as const;
+const percent = new Intl.NumberFormat('en-PK', { maximumFractionDigits: 0 });
 
 export default function AnalyticsPage() {
   const [records, setRecords] = useState<FuelRecord[]>([]);
@@ -25,7 +32,10 @@ export default function AnalyticsPage() {
   const load = useCallback(async () => {
     setStatus('loading');
     try {
-      const [recordResponse, vehicleResponse] = await Promise.all([getFuelRecords(), getVehicles()]);
+      const [recordResponse, vehicleResponse] = await Promise.all([
+        getFuelRecords(),
+        getVehicles(),
+      ]);
       setRecords(recordResponse.data.records);
       setVehicles(vehicleResponse.data.vehicles);
       setError('');
@@ -36,111 +46,282 @@ export default function AnalyticsPage() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const analytics = useMemo(
     () => calculateAnalytics(records, vehicles, months, vehicleId, fuelType),
     [records, vehicles, months, vehicleId, fuelType],
   );
+  const vehicleById = useMemo(
+    () => new Map(vehicles.map((vehicle) => [vehicle._id, vehicle])),
+    [vehicles],
+  );
+  const literAnalytics = useMemo(() => {
+    const literRecords = selectLiterRecords(records, vehicleById);
+    return calculateAnalytics(literRecords, vehicles, months, vehicleId, fuelType);
+  }, [records, vehicles, vehicleById, months, vehicleId, fuelType]);
   const hasFilters = months !== 6 || Boolean(vehicleId) || Boolean(fuelType);
-  const reset = () => { setMonths(6); setVehicleId(''); setFuelType(''); };
-
-  if (status === 'loading') return <PageSkeleton />;
-  if (status === 'error') return <ErrorState message={error} retry={load} />;
+  const reset = () => {
+    setMonths(6);
+    setVehicleId('');
+    setFuelType('');
+  };
+  const period = `Last ${months} months`;
+  const hasElectricPurchases = analytics.vehicles.some(
+    (vehicle) => vehicleById.get(vehicle.id)?.fuelType === 'Electric',
+  );
+  const spendMix = fuelTypes
+    .filter((type) =>
+      analytics.vehicles.some((vehicle) => vehicleById.get(vehicle.id)?.fuelType === type),
+    )
+    .map((type) => ({
+      type,
+      cost: analytics.vehicles.reduce(
+        (total, vehicle) =>
+          total + (vehicleById.get(vehicle.id)?.fuelType === type ? vehicle.cost : 0),
+        0,
+      ),
+    }));
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5">
       <PageHeader title="Analytics" subtitle="Understand fuel spending and usage patterns." />
 
-      <section aria-label="Analytics filters" className="app-panel grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto] lg:items-end">
-        <Select label="Time period" value={months} onChange={(event) => setMonths(Number(event.target.value) as MonthRange)}>
+      <section
+        aria-label="Analytics filters"
+        className="app-panel grid min-w-0 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))_auto] xl:items-end"
+      >
+        <Select
+          label="Date range"
+          value={months}
+          onChange={(event) => setMonths(Number(event.target.value) as MonthRange)}
+        >
           <option value={3}>Last 3 months</option>
           <option value={6}>Last 6 months</option>
           <option value={12}>Last 12 months</option>
         </Select>
-        <Select label="Vehicle" value={vehicleId} onChange={(event) => setVehicleId(event.target.value)}>
+        <Select
+          label="Vehicle"
+          value={vehicleId}
+          onChange={(event) => setVehicleId(event.target.value)}
+        >
           <option value="">All vehicles</option>
-          {vehicles.map((vehicle) => <option key={vehicle._id} value={vehicle._id}>{vehicle.vehicleName} ({vehicle.registrationNumber})</option>)}
+          {vehicles.map((vehicle) => (
+            <option key={vehicle._id} value={vehicle._id}>
+              {vehicle.vehicleName} ({vehicle.registrationNumber})
+            </option>
+          ))}
         </Select>
-        <Select label="Fuel type" value={fuelType} onChange={(event) => setFuelType(event.target.value as FuelTypeFilter)}>
+        <Select
+          label="Fuel type"
+          value={fuelType}
+          onChange={(event) => setFuelType(event.target.value as FuelTypeFilter)}
+        >
           <option value="">All fuel types</option>
-          <option value="Petrol">Petrol</option>
-          <option value="Diesel">Diesel</option>
-          <option value="Electric">Electric</option>
+          {fuelTypes.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
         </Select>
-        <Button variant="secondary" onClick={reset} disabled={!hasFilters} className="w-full sm:w-auto">
-          <RotateCcw className="h-4 w-4" />Reset
-        </Button>
+        {hasFilters && (
+          <Button variant="ghost" onClick={reset} className="w-full sm:w-auto">
+            <RotateCcw className="h-4 w-4" />
+            Reset filters
+          </Button>
+        )}
       </section>
 
-      {analytics.purchases === 0 ? (
+      {status === 'loading' ? (
+        <AnalyticsSkeleton />
+      ) : status === 'error' ? (
+        <ErrorState message={error} retry={load} />
+      ) : analytics.purchases === 0 ? (
         <EmptyState
           icon={BarChart3}
-          title={records.length === 0 ? 'No fuel purchases to analyze yet' : 'No fuel purchases match these filters'}
-          description={records.length === 0
-            ? 'Add a fuel purchase to see spending trends and vehicle comparisons.'
-            : 'Try a different time period, vehicle, or fuel type to see your data.'}
-          action={records.length === 0
-            ? <Link to={vehicles.length ? '/fuel-records/new' : '/vehicles/new'}><Button><Plus className="h-4 w-4" />{vehicles.length ? 'Add fuel record' : 'Add vehicle'}</Button></Link>
-            : <Button variant="secondary" onClick={reset}><RotateCcw className="h-4 w-4" />Reset filters</Button>}
+          title={
+            records.length === 0
+              ? 'No fuel data available yet'
+              : hasFilters
+                ? 'No records match these filters'
+                : 'No purchases in the last 6 months'
+          }
+          description={
+            records.length === 0
+              ? 'Add your first fuel purchase to see spending trends and vehicle comparisons.'
+              : hasFilters
+                ? 'Try another period, vehicle, or fuel type to see your data.'
+                : 'Older purchases may be outside this period. Choose a longer range or add a new record.'
+          }
+          action={
+            records.length === 0 || !hasFilters ? (
+              <Link to={vehicles.length ? '/fuel-records/new' : '/vehicles/new'}>
+                <Button>
+                  <Plus className="h-4 w-4" />
+                  {vehicles.length ? 'Add fuel record' : 'Add vehicle'}
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="secondary" onClick={reset}>
+                <RotateCcw className="h-4 w-4" />
+                Reset filters
+              </Button>
+            )
+          }
         />
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-live="polite">
-            <Metric label="Total spent" value={formatMoney(analytics.cost)} />
-            <Metric label="Fuel purchased" value={`${liters.format(analytics.quantity)} L`} />
-            <Metric label="Avg cost / purchase" value={formatMoney(analytics.averageCost)} />
-            <Metric label="Records" value={String(analytics.purchases)} />
+            <Metric
+              icon={Wallet}
+              label="Total spent"
+              value={formatPkr(analytics.cost)}
+              context={`${period} · ${analytics.vehicles.length} active vehicle${analytics.vehicles.length === 1 ? '' : 's'}`}
+            />
+            <Metric
+              icon={Fuel}
+              label="Fuel purchased"
+              value={
+                literAnalytics.purchases ? formatLiters(literAnalytics.quantity) : 'Unavailable'
+              }
+              context={
+                hasElectricPurchases
+                  ? 'Petrol and diesel only · EV quantity excluded'
+                  : 'Petrol and diesel · liters'
+              }
+            />
+            <Metric
+              icon={ReceiptText}
+              label="Average purchase cost"
+              value={formatPkr(analytics.averageCost)}
+              context="Across filtered purchases"
+            />
+            <Metric
+              icon={ListFilter}
+              label="Fuel purchase records"
+              value={String(analytics.purchases)}
+              context={period}
+            />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <TrendChart title="Fuel cost over time" subtitle="Monthly spending in PKR" months={analytics.monthly} metric="cost" />
-            <TrendChart title="Fuel quantity over time" subtitle="Monthly purchases in liters" months={analytics.monthly} metric="quantity" />
+          <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+            <FuelCostChart months={analytics.monthly} />
+            <SpendingMix costs={spendMix} total={analytics.cost} />
+          </div>
+          <div className="grid min-w-0 gap-5 xl:grid-cols-2">
+            <FuelQuantityChart
+              months={literAnalytics.monthly}
+              hasSupportedQuantity={literAnalytics.purchases > 0}
+            />
+            <VehicleComparisonChart vehicles={analytics.vehicles} />
           </div>
 
-          <section className="app-panel overflow-hidden">
-            <div className="flex items-center gap-2.5 border-b border-line px-5 py-4 sm:px-6">
-              <Fuel className="h-4 w-4 text-accent" />
+          <section
+            className="app-panel min-w-0 overflow-hidden"
+            aria-labelledby="analytics-vehicle-stats"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-6">
               <div>
-                <h2 className="text-base font-semibold text-slate-900">Per-vehicle statistics</h2>
-                <p className="text-xs text-content-muted">Fuel purchases in the selected period</p>
+                <h2 id="analytics-vehicle-stats" className="text-base font-semibold text-content">
+                  Vehicle statistics
+                </h2>
+                <p className="mt-1 text-xs text-content-muted">
+                  Purchase details for the selected period.
+                </p>
               </div>
+              <span className="text-xs font-medium text-content-muted">
+                {analytics.vehicles.length} vehicle{analytics.vehicles.length === 1 ? '' : 's'}
+              </span>
             </div>
-            <div className="hidden overflow-x-auto sm:block">
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-line bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  <tr><th className="px-6 py-3.5">Vehicle</th><th className="px-4 py-3.5 text-right">Quantity</th><th className="px-4 py-3.5 text-right">Cost</th><th className="px-6 py-3.5 text-right">Purchases</th></tr>
+                  <tr>
+                    <th className="px-6 py-3.5">Vehicle</th>
+                    <th className="px-4 py-3.5">Fuel type</th>
+                    <th className="px-4 py-3.5 text-right">Quantity</th>
+                    <th className="px-4 py-3.5 text-right">Total cost</th>
+                    <th className="px-4 py-3.5 text-right">Purchases</th>
+                    <th className="px-6 py-3.5 text-right">Avg purchase</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-line/70">
-                  {analytics.vehicles.map((vehicle) => <tr key={vehicle.id} className="hover:bg-slate-50/70">
-                    <td className="px-6 py-4"><span className="font-semibold text-slate-900">{vehicle.name}</span><span className="mt-0.5 block text-xs text-content-muted">{vehicle.registration}</span></td>
-                    <td className="px-4 py-4 text-right tabular-nums text-slate-700">{liters.format(vehicle.quantity)} L</td>
-                    <td className="px-4 py-4 text-right tabular-nums font-medium text-slate-900">{formatMoney(vehicle.cost)}</td>
-                    <td className="px-6 py-4 text-right tabular-nums text-slate-700">{vehicle.purchases}</td>
-                  </tr>)}
+                  {analytics.vehicles.map((vehicle) => {
+                    const type = vehicleById.get(vehicle.id)?.fuelType;
+                    return (
+                      <tr
+                        key={vehicle.id}
+                        className="transition-colors duration-150 hover:bg-slate-50/70"
+                      >
+                        <td className="px-6 py-4">
+                          <span
+                            className="block max-w-56 truncate font-semibold text-content"
+                            title={vehicle.name}
+                          >
+                            {vehicle.name}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-content-muted">
+                            {vehicle.registration}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">{type && <VehicleBadge fuel={type} />}</td>
+                        <td className="px-4 py-4 text-right tabular-nums text-slate-700">
+                          {type === 'Electric' ? 'Not available' : formatLiters(vehicle.quantity)}
+                        </td>
+                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-content">
+                          {formatPkr(vehicle.cost)}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-slate-700">
+                          {vehicle.purchases}
+                        </td>
+                        <td className="px-6 py-4 text-right tabular-nums text-slate-700">
+                          {formatPkr(vehicle.cost / vehicle.purchases)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-            <div className="divide-y divide-line sm:hidden">
-              {analytics.vehicles.map((vehicle) => <div key={vehicle.id} className="space-y-2 px-5 py-4">
-                <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold text-slate-900">{vehicle.name}</p><p className="text-xs text-content-muted">{vehicle.registration}</p></div><p className="text-sm font-semibold tabular-nums text-slate-900">{formatMoney(vehicle.cost)}</p></div>
-                <p className="text-xs text-content-muted">{liters.format(vehicle.quantity)} L · {vehicle.purchases} purchase{vehicle.purchases === 1 ? '' : 's'}</p>
-              </div>)}
+            <div className="divide-y divide-line lg:hidden">
+              {analytics.vehicles.map((vehicle) => {
+                const type = vehicleById.get(vehicle.id)?.fuelType;
+                return (
+                  <article key={vehicle.id} className="space-y-3 p-4 sm:p-5">
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="break-words text-sm font-semibold text-content">
+                          {vehicle.name}
+                        </h3>
+                        <p className="mt-0.5 text-xs text-content-muted">{vehicle.registration}</p>
+                      </div>
+                      {type && <VehicleBadge fuel={type} />}
+                    </div>
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="text-sm font-semibold tabular-nums text-content">
+                        {formatPkr(vehicle.cost)}
+                      </p>
+                      <p className="text-xs tabular-nums text-content-muted">
+                        {vehicle.purchases} purchase{vehicle.purchases === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                    <p className="text-xs text-content-muted">
+                      Quantity:{' '}
+                      {type === 'Electric' ? 'Not available' : formatLiters(vehicle.quantity)} · Avg
+                      purchase: {formatPkr(vehicle.cost / vehicle.purchases)}
+                    </p>
+                  </article>
+                );
+              })}
             </div>
-          </section>
-
-          <section className="app-panel p-5 sm:p-6">
-            <div className="flex items-center gap-2.5">
-              <TrendingUp className="h-4 w-4 text-accent" />
-              <div><h2 className="text-base font-semibold text-slate-900">Vehicle comparison</h2><p className="text-xs text-content-muted">Total spending by vehicle</p></div>
-            </div>
-            <div className="mt-6 space-y-4">
-              {analytics.vehicles.map((vehicle) => <div key={vehicle.id} className="grid gap-2 sm:grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)_auto] sm:items-center sm:gap-4">
-                <span className="truncate text-sm font-medium text-slate-700" title={vehicle.name}>{vehicle.name}</span>
-                <div className="h-3 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`${vehicle.name}: ${formatMoney(vehicle.cost)}`}><div className="h-full rounded-full bg-accent" style={{ width: `${analytics.vehicles[0].cost > 0 ? (vehicle.cost / analytics.vehicles[0].cost) * 100 : 0}%` }} /></div>
-                <span className="text-sm font-semibold tabular-nums text-slate-900 sm:text-right">{formatMoney(vehicle.cost)}</span>
-              </div>)}
-            </div>
+            {hasElectricPurchases && (
+              <p className="border-t border-line bg-slate-50/50 px-5 py-3 text-xs leading-relaxed text-content-muted sm:px-6">
+                Electric purchase quantities are hidden because Fuel Records do not specify a kWh
+                unit. Spending and purchase counts still include them.
+              </p>
+            )}
           </section>
         </>
       )}
@@ -148,32 +329,113 @@ export default function AnalyticsPage() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return <div className="app-panel min-w-0 p-5"><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p><p className="mt-3 break-words text-2xl font-bold tracking-tight text-slate-900 tabular-nums">{value}</p></div>;
+function Metric({
+  icon: Icon,
+  label,
+  value,
+  context,
+}: {
+  icon: typeof Wallet;
+  label: string;
+  value: string;
+  context: string;
+}) {
+  return (
+    <section className="app-panel dashboard-enter min-w-0 p-5 transition-shadow duration-150 hover:shadow-panel">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-content-muted">{label}</p>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent">
+          <Icon aria-hidden="true" className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="mt-4 break-words text-2xl font-bold tracking-tight tabular-nums text-content">
+        {value}
+      </p>
+      <p className="mt-1.5 text-xs leading-relaxed text-content-muted">{context}</p>
+    </section>
+  );
 }
 
-function TrendChart({ title, subtitle, months, metric }: { title: string; subtitle: string; months: MonthlyTotal[]; metric: 'cost' | 'quantity' }) {
-  const values = months.map((month) => month[metric]);
-  const max = Math.max(...values, 1);
-  const x = (index: number) => 52 + index * (548 / (months.length - 1));
-  const y = (value: number) => 172 - (value / max) * 148;
-  const points = values.map((value, index) => `${x(index)},${y(value)}`).join(' ');
-  const label = (value: number) => metric === 'cost' ? `PKR ${compact.format(value)}` : `${compact.format(value)} L`;
+function SpendingMix({
+  costs,
+  total,
+}: {
+  costs: { type: Vehicle['fuelType']; cost: number }[];
+  total: number;
+}) {
+  const colors = { Petrol: 'bg-accent', Diesel: 'bg-slate-500', Electric: 'bg-emerald-500' };
+  return (
+    <section className="app-panel min-w-0 p-5 sm:p-6" aria-labelledby="analytics-mix-title">
+      <h2 id="analytics-mix-title" className="text-base font-semibold text-content">
+        Spending mix
+      </h2>
+      <p className="mt-1 text-xs text-content-muted">Cost split by vehicle fuel type.</p>
+      <p className="mt-7 break-words text-3xl font-bold tracking-tight tabular-nums text-content">
+        {formatPkr(total)}
+      </p>
+      <p className="mt-1 text-xs text-content-muted">Total across filtered purchases</p>
+      <div
+        role="img"
+        aria-label={`Spending mix: ${costs.map(({ type, cost }) => `${type} ${formatPkr(cost)}`).join(', ')}`}
+        className="mt-6 flex h-3 overflow-hidden rounded-full bg-slate-100"
+      >
+        {costs.map(({ type, cost }) => (
+          <span
+            key={type}
+            className={`${colors[type]} h-full transition-[width] duration-200`}
+            style={{ width: `${total > 0 ? (cost / total) * 100 : 0}%` }}
+          />
+        ))}
+      </div>
+      <div className="mt-6 space-y-3">
+        {costs.map(({ type, cost }) => (
+          <div key={type} className="flex min-w-0 items-center justify-between gap-3 text-sm">
+            <span className="flex min-w-0 items-center gap-2 text-content-muted">
+              <span
+                aria-hidden="true"
+                className={`h-2 w-2 shrink-0 rounded-full ${colors[type]}`}
+              />
+              {type}
+            </span>
+            <span className="text-right font-semibold tabular-nums text-content">
+              {formatPkr(cost)}{' '}
+              <span className="ml-1 text-xs font-normal text-content-muted">
+                {total > 0 ? percent.format((cost / total) * 100) : '0'}%
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
-  return <section className="app-panel min-w-0 p-5 sm:p-6">
-    <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-    <p className="mt-0.5 text-xs text-content-muted">{subtitle}</p>
-    <div className="mt-5 overflow-x-auto">
-      <svg className="w-full min-w-[500px]" viewBox="0 0 620 214" role="img" aria-label={`${title}: ${months.map((month) => `${month.label} ${label(month[metric])}`).join(', ')}`}>
-        {[0, 0.5, 1].map((fraction) => <g key={fraction}>
-          <line x1="52" x2="600" y1={y(max * fraction)} y2={y(max * fraction)} stroke="#e2e8f0" strokeDasharray={fraction === 0 ? undefined : '4 4'} />
-          <text x="45" y={y(max * fraction) + 4} textAnchor="end" fill="#64748b" fontSize="10">{label(max * fraction)}</text>
-        </g>)}
-        {metric === 'cost'
-          ? <><polyline points={points} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />{values.map((value, index) => <circle key={months[index].key} cx={x(index)} cy={y(value)} r="4" fill="#2563eb" stroke="white" strokeWidth="2"><title>{months[index].label}: {formatMoney(value)}</title></circle>)}</>
-          : values.map((value, index) => <rect key={months[index].key} x={x(index) - Math.min(18, 220 / months.length)} y={y(value)} width={Math.min(36, 440 / months.length)} height={Math.max(0, 172 - y(value))} rx="4" fill="#2563eb"><title>{months[index].label}: {liters.format(value)} L</title></rect>)}
-        {months.map((month, index) => (months.length < 12 || index % 2 === 0 || index === months.length - 1) && <text key={month.key} x={x(index)} y="202" textAnchor="middle" fill="#64748b" fontSize="11">{month.label}</text>)}
-      </svg>
+function AnalyticsSkeleton() {
+  return (
+    <div role="status" aria-label="Loading analytics" className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((item) => (
+          <div key={item} className="app-panel space-y-4 p-5">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+        <div className="app-panel p-5">
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="mt-5 h-64 w-full" />
+        </div>
+        <div className="app-panel p-5">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="mt-5 h-64 w-full" />
+        </div>
+      </div>
+      <div className="app-panel p-5">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="mt-5 h-32 w-full" />
+      </div>
     </div>
-  </section>;
+  );
 }

@@ -41,22 +41,22 @@ export default function VehicleForm({
   const electric = useWatch({ control, name: 'fuelType' }) === 'Electric';
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="app-panel min-w-0">
       {/* Identity Section */}
-      <section className="app-panel p-5 sm:p-7">
-        <div className="flex items-center gap-3 border-b border-line pb-4">
+      <section className="p-5 sm:p-6">
+        <div className="flex items-center gap-3 pb-1">
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent-soft text-accent">
             <CarFront className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Vehicle identity</h2>
+            <h2 className="text-base font-semibold text-slate-900">Vehicle details</h2>
             <p className="text-xs text-content-muted">
-              General identification and registration records for this asset
+              Give your vehicle a recognizable name and registration.
             </p>
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="mt-5 grid gap-x-5 gap-y-5 sm:grid-cols-2">
           <Input
             label="Vehicle name"
             placeholder="e.g. Delivery Van Alpha"
@@ -90,20 +90,20 @@ export default function VehicleForm({
       </section>
 
       {/* Fuel & Performance Section */}
-      <section className="app-panel p-5 sm:p-7">
-        <div className="flex items-center gap-3 border-b border-line pb-4">
+      <section className="border-t border-line p-5 sm:p-6">
+        <div className="flex items-center gap-3 pb-1">
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-amber-50 text-amber-600">
             <Fuel className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Fuel & efficiency metrics</h2>
+            <h2 className="text-base font-semibold text-slate-900">Fuel & efficiency</h2>
             <p className="text-xs text-content-muted">
-              Operating consumption and capacity parameters
+              Used to estimate consumption when you plan a route.
             </p>
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        <div className="mt-5 grid gap-x-5 gap-y-5 sm:grid-cols-3">
           <Select
             label="Fuel type"
             hint="Primary energy source"
@@ -136,7 +136,7 @@ export default function VehicleForm({
       </section>
 
       {/* Action Footer */}
-      <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 rounded-b-card border-t border-line bg-slate-50/60 p-5 sm:px-6">
         <Link to="/vehicles">
           <Button variant="secondary" type="button">
             Cancel
@@ -144,7 +144,7 @@ export default function VehicleForm({
         </Link>
         <Button disabled={isSubmitting} type="submit" className="min-w-36">
           {isSubmitting && <Spinner />}
-          <span>{vehicle ? 'Save changes' : 'Register vehicle'}</span>
+          <span>{vehicle ? 'Save changes' : 'Add vehicle'}</span>
         </Button>
       </div>
     </form>
