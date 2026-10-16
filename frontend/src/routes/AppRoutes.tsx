@@ -27,6 +27,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import { useAuth } from '@/hooks/useAuth';
 
 const RoutePlannerPage = lazy(() => import('@/pages/trips/RoutePlannerPage'));
+const AnalyticsPage = lazy(() => import('@/pages/analytics/AnalyticsPage'));
 
 function RoleAwareRedirect() {
   const { user, isAuthenticated } = useAuth();
@@ -58,6 +59,7 @@ export default function AppRoutes() {
           {/* Individual-only routes — Admin gets redirected to /admin/users */}
           <Route element={<IndividualRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/analytics" element={<Suspense fallback={<PageSkeleton />}><AnalyticsPage /></Suspense>} />
             <Route path="/crisis-mode" element={<CrisisModePage />} />
             <Route path="/vehicles" element={<VehicleListPage />} />
             <Route path="/vehicles/new" element={<AddVehiclePage />} />

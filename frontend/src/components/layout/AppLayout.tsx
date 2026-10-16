@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { CalendarDays, CarFront, Fuel, LayoutDashboard, LogOut, Menu, UserRound, X, Layers, Users, ShieldAlert, ShieldCheck, Wallet } from 'lucide-react';
+import { BarChart3, CalendarDays, CarFront, Fuel, LayoutDashboard, LogOut, Menu, UserRound, X, Layers, Users, ShieldAlert, ShieldCheck, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -83,6 +83,7 @@ export default function AppLayout() {
                 { to: '/vehicles', label: 'My Vehicles', Icon: CarFront },
                 { to: '/fuel-records', label: 'Fuel Records', Icon: Fuel },
                 { to: '/fuel-budget', label: 'Fuel Budget', Icon: Wallet },
+                { to: '/analytics', label: 'Analytics', Icon: BarChart3 },
                 { to: '/trips', label: 'Trips', Icon: CalendarDays },
                 { to: '/crisis-mode', label: 'Crisis Mode', Icon: ShieldCheck },
                 { to: '/profile', label: 'Profile', Icon: UserRound },
