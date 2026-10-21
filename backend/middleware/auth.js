@@ -24,6 +24,9 @@ export const verifyToken = (req, res, next) => {
       })
       .catch((error) => next(error));
   } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: "Your session is invalid or expired. Sign in again." });
+    }
     return next(error);
   }
 };

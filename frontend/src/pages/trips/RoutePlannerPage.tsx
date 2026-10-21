@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowDownUp, AlertCircle, CarFront, Check, Route, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -47,76 +47,24 @@ function Planner({ initialTrip, vehicle }: { initialTrip: Trip; vehicle: Vehicle
     Number.isFinite(vehicle.fuelEfficiency) &&
     vehicle.fuelEfficiency > 0 &&
     ['Petrol', 'Diesel', 'Electric'].includes(vehicle.fuelType);
-  const canRestore = Boolean(
-    initialTrip.startCoordinates &&
-    initialTrip.destinationCoordinates &&
-    currentEstimate(initialTrip.selectedRoute, vehicle),
-  );
-  const [calculating, setCalculating] = useState(canRestore);
+  const [calculating, setCalculating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [restored, setRestored] = useState(false);
   const request = useRef<AbortController | null>(null);
   const revision = useRef(0);
   const optionsSection = useRef<HTMLElement>(null);
   const electric = vehicle.fuelType === 'Electric';
 
-  const applyOptions = useCallback((data: RouteOptionsResponse, saved?: SelectedRoute) => {
-    const matching =
-      saved &&
-      data.options.find(
-        (option) =>
-          Math.abs(option.distanceKm - saved.distanceKm) < 0.001 &&
-          Math.abs(option.durationMinutes - saved.durationMinutes) < 0.001,
-      );
+  const applyOptions = (data: RouteOptionsResponse) => {
     setResult(data);
     setSelectedId(
-      matching?.id ??
-        data.options.find((option) => option.isRecommended)?.id ??
+      data.options.find((option) => option.isRecommended)?.id ??
         data.options[0]?.id ??
         '',
     );
-    setSavedId(
-      matching &&
-        saved &&
-        matching.resourceUnit === saved.resourceUnit &&
-        Math.abs(matching.estimatedResource - saved.estimatedResource) < 0.00001
-        ? matching.id
-        : '',
-    );
+    setSavedId('');
     setError('');
-  }, []);
-
-  useEffect(() => {
-    if (!canRestore) return;
-    const controller = new AbortController();
-    request.current = controller;
-    const version = ++revision.current;
-    getRouteOptions(
-      initialTrip._id,
-      { label: initialTrip.startLocation, coordinates: initialTrip.startCoordinates! },
-      { label: initialTrip.destination, coordinates: initialTrip.destinationCoordinates! },
-      controller.signal,
-    )
-      .then(({ data }) => {
-        if (controller.signal.aborted || version !== revision.current) return;
-        applyOptions(data, initialTrip.selectedRoute);
-        setRestored(true);
-      })
-      .catch((reason) => {
-        if (!controller.signal.aborted && version === revision.current)
-          setError(
-            getErrorMessage(
-              reason,
-              'The map could not be refreshed. Your saved route is still available below.',
-            ),
-          );
-      })
-      .finally(() => {
-        if (!controller.signal.aborted && version === revision.current) setCalculating(false);
-      });
-    return () => controller.abort();
-  }, [initialTrip, canRestore, applyOptions]);
+  };
 
   useEffect(() => () => request.current?.abort(), []);
 
@@ -127,7 +75,6 @@ function Planner({ initialTrip, vehicle }: { initialTrip: Trip; vehicle: Vehicle
     setSelectedId('');
     setSavedId('');
     setError('');
-    setRestored(false);
     setCalculating(false);
   };
 
@@ -141,7 +88,6 @@ function Planner({ initialTrip, vehicle }: { initialTrip: Trip; vehicle: Vehicle
     setError('');
     setResult(null);
     setSavedId('');
-    setRestored(false);
     try {
       const { data } = await getRouteOptions(
         trip._id,
@@ -170,7 +116,6 @@ function Planner({ initialTrip, vehicle }: { initialTrip: Trip; vehicle: Vehicle
       const { data } = await saveTripRoute(trip._id, result.planId, selectedId);
       setTrip(data.trip);
       setSavedId(selectedId);
-      setRestored(false);
       setError('');
       toast.success(data.message);
     } catch (reason) {
@@ -419,13 +364,6 @@ function Planner({ initialTrip, vehicle }: { initialTrip: Trip; vehicle: Vehicle
             <p className="mt-3 text-xs text-warning">
               The saved fuel or energy estimate is outdated or invalid. Recalculate and save an
               updated route plan.
-            </p>
-          )}
-          {restored && (
-            <p className="mt-3 text-xs text-content-muted">
-              {savedId
-                ? 'A matching route is selected on the refreshed map.'
-                : 'The map shows freshly calculated alternatives. Your saved summary above is kept until you save a new selection.'}
             </p>
           )}
         </section>

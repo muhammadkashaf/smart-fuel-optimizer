@@ -1,12 +1,14 @@
 import Vehicle from "../models/Vehicle.js";
+import FuelRecord from "../models/FuelRecord.js";
+import Trip from "../models/Trip.js";
 import { isPositiveNumber, isValidYear } from "../utils/validation.js";
 import { syncNotificationsForVehicle } from "../services/notificationService.js";
 
-const isOwnerOrAdmin = (vehicle, user) => {
+const isOwner = (vehicle, user) => {
   const ownerId = vehicle.userId?._id
     ? String(vehicle.userId._id)
     : String(vehicle.userId);
-  return ownerId === String(user._id) || user.role === "Admin";
+  return ownerId === String(user._id);
 };
 
 
@@ -68,8 +70,7 @@ export const createVehicle = async (req, res, next) => {
 
 export const getVehicles = async (req, res, next) => {
   try {
-    const filter = req.user.role === "Admin" ? {} : { userId: req.user._id };
-    const vehicles = await Vehicle.find(filter).populate("userId", "fullName email role");
+    const vehicles = await Vehicle.find({ userId: req.user._id }).populate("userId", "fullName email role");
 
     res.json({ vehicles });
   } catch (error) {
@@ -85,7 +86,7 @@ export const getVehicleById = async (req, res, next) => {
       return res.status(404).json({ message: "Vehicle not found" });
     }
 
-    if (!isOwnerOrAdmin(vehicle, req.user)) {
+    if (!isOwner(vehicle, req.user)) {
       return res.status(403).json({ message: "You don't have permission to perform this action" });
     }
 
@@ -103,7 +104,7 @@ export const updateVehicle = async (req, res, next) => {
       return res.status(404).json({ message: "Vehicle not found" });
     }
 
-    if (!isOwnerOrAdmin(vehicle, req.user)) {
+    if (!isOwner(vehicle, req.user)) {
       return res.status(403).json({ message: "You don't have permission to perform this action" });
     }
 
@@ -161,8 +162,16 @@ export const deleteVehicle = async (req, res, next) => {
       return res.status(404).json({ message: "Vehicle not found" });
     }
 
-    if (!isOwnerOrAdmin(vehicle, req.user)) {
+    if (!isOwner(vehicle, req.user)) {
       return res.status(403).json({ message: "You don't have permission to perform this action" });
+    }
+
+    const [hasFuelRecords, hasTrips] = await Promise.all([
+      FuelRecord.exists({ vehicleId: vehicle._id }),
+      Trip.exists({ vehicleId: vehicle._id }),
+    ]);
+    if (hasFuelRecords || hasTrips) {
+      return res.status(409).json({ message: "Delete this vehicle's fuel records and trips before removing it." });
     }
 
     await vehicle.deleteOne();

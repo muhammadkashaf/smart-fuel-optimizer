@@ -10,6 +10,7 @@ import DashboardBudget from '@/components/budgets/DashboardBudget';
 import DashboardCrisisMode from '@/components/crisis/DashboardCrisisMode';
 import { formatPkr } from '@/components/budgets/BudgetOverview';
 import { calculateAnalytics } from '@/utils/analytics';
+import { selectLiterRecords } from '@/utils/analyticsDisplay';
 import type { FuelRecord, Trip, Vehicle } from '@/types';
 
 const number = new Intl.NumberFormat('en-PK', { maximumFractionDigits: 2 });
@@ -27,7 +28,6 @@ export default function DashboardPage() {
   const [records, setRecords] = useState<FuelRecord[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [selectedMonth, setSelectedMonth] = useState(5);
   const load = async () => {
     setStatus('loading');
     try {
@@ -51,6 +51,10 @@ export default function DashboardPage() {
     () => calculateAnalytics(records, vehicles, 6, '', ''),
     [records, vehicles],
   );
+  const literAnalytics = useMemo(() => {
+    const vehicleById = new Map(vehicles.map((vehicle) => [vehicle._id, vehicle]));
+    return calculateAnalytics(selectLiterRecords(records, vehicleById), vehicles, 6, '', '');
+  }, [records, vehicles]);
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const upcoming = trips
@@ -69,7 +73,7 @@ export default function DashboardPage() {
     },
     {
       label: 'Fuel purchased',
-      value: `${number.format(month.quantity)} L`,
+      value: `${number.format(literAnalytics.monthly[5].quantity)} L`,
       context: 'Recorded this month',
       Icon: Fuel,
     },
@@ -95,8 +99,8 @@ export default function DashboardPage() {
             <Skeleton key={i} className="h-32" />
           ))}
         </div>
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-          <Skeleton className="h-80" />
+        <div className="grid gap-5 xl:grid-cols-2">
+          <Skeleton className="h-56" />
           <Skeleton className="h-80" />
         </div>
         <Skeleton className="h-24" />
@@ -110,9 +114,9 @@ export default function DashboardPage() {
     return <ErrorState message="We couldn't load your dashboard. Please try again." retry={load} />;
   const maxCost = Math.max(...analytics.monthly.map((item) => item.cost), 1);
   const points = analytics.monthly
-    .map((item, i) => `${35 + i * 102},${175 - (item.cost / maxCost) * 140}`)
+    .map((item, i) => `${12 + i * 111},${70 - (item.cost / maxCost) * 52}`)
     .join(' ');
-  const selected = analytics.monthly[selectedMonth];
+  const hasRecentSpending = analytics.monthly.some((item) => item.cost > 0);
 
   return (
     <div className="dashboard-enter space-y-5">
@@ -151,97 +155,60 @@ export default function DashboardPage() {
           </section>
         ))}
       </div>
-      <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <section className="app-panel min-w-0 p-5 sm:p-6">
+      <div className="grid items-start gap-5 xl:grid-cols-2">
+        <section className="app-panel min-w-0 p-5 sm:p-6" aria-label="Fuel spending preview">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold">Fuel spending</h2>
-              <p className="mt-1 text-xs text-content-muted">Last six months · PKR</p>
+              <p className="mt-1 text-xs text-content-muted">This month · {month.label}</p>
             </div>
-            <Link to="/analytics" className="dashboard-link">
-              Analytics <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
           </div>
-          {analytics.purchases === 0 ? (
-            <div className="flex min-h-60 flex-col items-center justify-center gap-3 text-center">
-              <Fuel className="h-7 w-7 text-slate-300" />
-              <p className="text-sm text-content-muted">No fuel purchases in this period.</p>
+          <p className="mt-4 break-words text-2xl font-bold tracking-tight text-content tabular-nums">
+            {formatPkr(month.cost)}
+          </p>
+          {!hasRecentSpending ? (
+            <div className="mt-4 rounded-xl bg-surface-muted/60 p-4">
+              <p className="text-sm text-content-muted">No fuel spending recorded this month.</p>
               <Link
                 to={vehicles.length ? '/fuel-records/new' : '/vehicles/new'}
-                className={actionClass}
+                className={`${actionClass} mt-3`}
               >
                 {vehicles.length ? 'Add fuel record' : 'Add your first vehicle'}
               </Link>
             </div>
           ) : (
             <>
-              <div aria-live="polite" className="mt-4 flex flex-wrap items-baseline gap-2">
-                <strong className="text-xl tabular-nums">{formatPkr(selected.cost)}</strong>
-                <span className="text-xs text-content-muted">{selected.label}</span>
-              </div>
+              {month.cost === 0 && (
+                <p className="mt-1 text-xs text-content-muted">
+                  No fuel spending recorded this month.
+                </p>
+              )}
               <svg
-                onPointerMove={(event) => {
-                  const bounds = event.currentTarget.getBoundingClientRect();
-                  const x = ((event.clientX - bounds.left) / bounds.width) * 580;
-                  setSelectedMonth(Math.max(0, Math.min(5, Math.round((x - 35) / 102))));
-                }}
-                className="mt-3 w-full"
-                viewBox="0 0 580 195"
+                className="mt-5 block h-20 w-full"
+                viewBox="0 0 580 80"
+                preserveAspectRatio="none"
                 role="img"
-                aria-label="Monthly fuel spending. Select a month below for its exact amount."
+                aria-label={`Recent six-month spending trend: ${analytics.monthly.map((item) => `${item.label}, ${formatPkr(item.cost)}`).join('; ')}`}
               >
-                {[35, 105, 175].map((y) => (
-                  <line
-                    key={y}
-                    x1="35"
-                    x2="545"
-                    y1={y}
-                    y2={y}
-                    stroke="#e2e8f0"
-                    strokeDasharray="4 5"
-                  />
-                ))}
-                <polygon points={`35,175 ${points} 545,175`} fill="#2563eb" opacity="0.06" />
+                <polygon points={`12,76 ${points} 567,76`} fill="#2563eb" opacity="0.08" />
                 <polyline
                   className="spending-line"
                   points={points}
                   fill="none"
                   stroke="#2563eb"
-                  strokeWidth="3"
+                  strokeWidth="2.5"
                   strokeLinejoin="round"
                   strokeLinecap="round"
                   pathLength="1"
                 />
-                {analytics.monthly.map((item, i) => (
-                  <circle
-                    key={item.key}
-                    cx={35 + i * 102}
-                    cy={175 - (item.cost / maxCost) * 140}
-                    r={i === selectedMonth ? 5 : 3}
-                    fill="#2563eb"
-                    stroke="white"
-                    strokeWidth="2"
-                  />
-                ))}
+                <circle cx="567" cy={70 - (month.cost / maxCost) * 52} r="4" fill="#2563eb" stroke="white" strokeWidth="2" />
               </svg>
-              <div className="grid grid-cols-6 gap-1">
-                {analytics.monthly.map((item, i) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onMouseEnter={() => setSelectedMonth(i)}
-                    onFocus={() => setSelectedMonth(i)}
-                    onClick={() => setSelectedMonth(i)}
-                    aria-pressed={i === selectedMonth}
-                    aria-label={`${item.label}: ${formatPkr(item.cost)}`}
-                    className={`rounded-md px-1 py-2 text-[10px] transition-colors focus-visible:outline-2 focus-visible:outline-accent sm:text-xs ${i === selectedMonth ? 'bg-accent-soft font-semibold text-accent' : 'text-content-muted hover:bg-slate-50'}`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
+              <p className="mt-1 text-[11px] text-content-muted">Recent six-month trend</p>
             </>
           )}
+          <Link to="/analytics" className="dashboard-link mt-5">
+            View full analytics <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </section>
         <DashboardBudget />
       </div>

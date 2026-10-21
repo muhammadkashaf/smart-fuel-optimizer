@@ -19,7 +19,11 @@ export default function BudgetOverview({ summary }: { summary: BudgetSummary }) 
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           <div>
             <p className="text-sm font-semibold">Budget exceeded</p>
-            <p className="mt-0.5 text-sm">Exceeded amount: {formatPkr(Math.max(0, -summary.remaining))}.</p>
+            <p className="mt-0.5 text-sm">
+              {summary.remaining < 0
+                ? `Exceeded amount: ${formatPkr(-summary.remaining)}.`
+                : 'You have used the full monthly budget.'}
+            </p>
           </div>
         </div>
       )}

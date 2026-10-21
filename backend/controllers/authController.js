@@ -6,6 +6,7 @@ import { isValidContactNumber, isValidEmail } from "../utils/validation.js";
 const createToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
+const validPassword = (value) => typeof value === "string" && value.length >= 8 && /\d/.test(value);
 
 export const register = async (req, res, next) => {
   try {
@@ -13,6 +14,14 @@ export const register = async (req, res, next) => {
 
     if (!fullName || !email || !contactNumber || !role || !password) {
       return res.status(400).json({ message: "Please complete all required fields" });
+    }
+
+    if (!validPassword(password)) {
+      return res.status(400).json({ message: "Password must be at least 8 characters and include a number" });
+    }
+
+    if (typeof fullName !== "string" || fullName.trim().length < 2) {
+      return res.status(400).json({ message: "Name must be at least 2 characters" });
     }
 
     if (!["Individual", "Organizational"].includes(role)) {
@@ -68,6 +77,9 @@ export const login = async (req, res, next) => {
 
     if (!email || !password) {
       return res.status(400).json({ message: "Please enter your email address and password" });
+    }
+    if (typeof password !== "string") {
+      return res.status(400).json({ message: "Please enter a valid password" });
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
@@ -126,7 +138,12 @@ export const updateProfile = async (req, res, next) => {
     const { fullName, email, contactNumber, password } = req.body;
     const updates = {};
 
-    if (fullName !== undefined) updates.fullName = String(fullName).trim();
+    if (fullName !== undefined) {
+      if (typeof fullName !== "string" || fullName.trim().length < 2) {
+        return res.status(400).json({ message: "Name must be at least 2 characters" });
+      }
+      updates.fullName = fullName.trim();
+    }
 
     if (email !== undefined) {
       const normalizedEmail = String(email).trim().toLowerCase();
@@ -150,7 +167,10 @@ export const updateProfile = async (req, res, next) => {
       updates.contactNumber = contactNumber;
     }
 
-    if (password) {
+    if (password !== undefined) {
+      if (!validPassword(password)) {
+        return res.status(400).json({ message: "Password must be at least 8 characters and include a number" });
+      }
       updates.password = await bcrypt.hash(password, 10);
     }
 

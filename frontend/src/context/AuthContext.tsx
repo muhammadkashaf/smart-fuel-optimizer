@@ -9,6 +9,7 @@ type AuthValue = {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   login: (token: string, user: User) => void;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
@@ -19,17 +20,22 @@ export const AuthContext = createContext<AuthValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    const t = localStorage.getItem(TOKEN_KEY);
-    const u = localStorage.getItem(USER_KEY);
-    if (t && u) {
-      try {
+    try {
+      const t = localStorage.getItem(TOKEN_KEY);
+      const u = localStorage.getItem(USER_KEY);
+      if (t && u) {
         setToken(t);
         setUser(JSON.parse(u));
-      } catch {
-        localStorage.clear();
       }
+    } catch {
+      localStorage.clear();
+      setToken(null);
+      setUser(null);
+    } finally {
+      setIsInitializing(false);
     }
   }, []);
 
@@ -58,8 +64,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   const value = useMemo(
-    () => ({ user, token, isAuthenticated: Boolean(token && user), login, logout, updateUser }),
-    [token, user],
+    () => ({
+      user,
+      token,
+      isAuthenticated: Boolean(token && user),
+      isInitializing,
+      login,
+      logout,
+      updateUser,
+    }),
+    [token, user, isInitializing],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

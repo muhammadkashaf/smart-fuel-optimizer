@@ -111,7 +111,9 @@ export default function DashboardBudget() {
                 className={`mt-5 rounded-lg px-3 py-2.5 text-xs font-medium ${exceeded ? 'bg-danger-soft text-danger' : status === 'approaching' ? 'bg-warning-soft text-warning' : 'bg-success-soft text-emerald-700'}`}
               >
                 {exceeded
-                  ? `Budget exceeded · ${formatPkr(Math.max(0, -(summary.remaining ?? 0)))} over limit`
+                  ? summary.isExceeded
+                    ? `Budget exceeded · ${formatPkr(Math.max(0, -(summary.remaining ?? 0)))} over limit`
+                    : 'Budget exceeded · Monthly limit reached'
                   : status === 'approaching'
                     ? 'Approaching budget limit'
                     : 'Within budget'}
