@@ -32,13 +32,13 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthFrame title="Sign in to your account" text="Welcome back. Enter your credentials to access your vehicle records.">
+    <AuthFrame title="Welcome back" text="Sign in to continue managing your fuel and vehicles.">
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
         <Input
           label="Email address"
           type="email"
           autoComplete="email"
-          placeholder="name@company.com"
+          placeholder="you@example.com"
           error={errors.email?.message as string}
           {...register('email')}
         />
@@ -53,7 +53,7 @@ export default function LoginPage() {
         <div className="pt-2">
           <Button disabled={isSubmitting} size="lg" className="w-full">
             {isSubmitting && <Spinner />}
-            <span>Sign in to workspace</span>
+            <span>Sign in</span>
           </Button>
         </div>
       </form>

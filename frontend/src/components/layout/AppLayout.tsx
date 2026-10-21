@@ -50,13 +50,19 @@ export default function AppLayout() {
     },
     { label: 'Account', links: [{ to: '/profile', label: 'Profile', Icon: UserRound }] },
   ];
-  const pageTitle =
-    memberGroups
-      .flatMap((group) => group.links)
-      .find((link) => pathname === link.to || pathname.startsWith(`${link.to}/`))?.label ??
-    'Notifications';
-
+  const adminGroups = [
+    { label: 'Overview', links: [{ to: '/admin', label: 'Dashboard', Icon: LayoutDashboard }] },
+    { label: 'Management', links: [
+      { to: '/admin/users', label: 'Manage Users', Icon: Users },
+      { to: '/admin/vehicles', label: 'Manage Vehicles', Icon: CarFront },
+    ] },
+    { label: 'Account', links: [{ to: '/profile', label: 'Profile', Icon: UserRound }] },
+  ];
   const isAdmin = user?.role === 'Admin';
+  const allLinks = (isAdmin ? adminGroups : memberGroups).flatMap((group) => group.links);
+  const pageTitle =
+    (allLinks.find((link) => pathname === link.to) ??
+      allLinks.find((link) => pathname.startsWith(`${link.to}/`)))?.label ?? 'Notifications';
   useEffect(() => {
     if (!open) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -106,9 +112,7 @@ export default function AppLayout() {
           className={({ isActive }) =>
             `group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-accent-border ${
               isActive
-                ? isAdmin
-                  ? 'bg-accent text-white shadow-xs'
-                  : 'bg-blue-500/15 text-blue-200 ring-1 ring-inset ring-blue-400/20'
+                ? 'bg-blue-500/15 text-blue-200 ring-1 ring-inset ring-blue-400/20'
                 : 'text-slate-400 hover:bg-white/[0.07] hover:text-slate-100'
             }`
           }
@@ -145,42 +149,26 @@ export default function AppLayout() {
             </div>
             <div className="min-w-0">
               <span className="block text-base font-bold tracking-tight text-white">
-                {isAdmin ? 'Smart Fuel' : 'SmartFuel'}
+                SmartFuel
               </span>
               <span className="text-[11px] font-medium tracking-wide text-slate-400">
-                Fuel & Vehicle Management
+                {isAdmin ? 'Admin workspace' : 'Fuel & Vehicle Management'}
               </span>
             </div>
           </div>
 
           {/* Navigation Group */}
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-5">
-            {!isAdmin && (
-              <nav aria-label="Member navigation" className="space-y-5">
-                {memberGroups.map((group) => (
-                  <div key={group.label}>
-                    <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      {group.label}
-                    </p>
-                    {renderNavLinks(group.links)}
-                  </div>
-                ))}
-              </nav>
-            )}
-
-            {isAdmin && (
-              <div>
-                <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400/90">
-                  Admin Panel
-                </p>
-                {renderNavLinks([
-                  { to: '/admin', label: 'Dashboard', Icon: LayoutDashboard },
-                  { to: '/admin/users', label: 'Manage Users', Icon: Users },
-                  { to: '/admin/vehicles', label: 'Manage Vehicles', Icon: CarFront },
-                  { to: '/profile', label: 'Profile', Icon: UserRound },
-                ])}
-              </div>
-            )}
+            <nav aria-label={isAdmin ? 'Admin navigation' : 'Member navigation'} className="space-y-5">
+              {(isAdmin ? adminGroups : memberGroups).map((group) => (
+                <div key={group.label}>
+                  <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    {group.label}
+                  </p>
+                  {renderNavLinks(group.links)}
+                </div>
+              ))}
+            </nav>
           </div>
 
           {/* Bottom Actions */}
@@ -217,23 +205,14 @@ export default function AppLayout() {
               <Menu className="h-5 w-5" />
             </button>
 
-            {!isAdmin && (
-              <div className="ml-3 hidden min-w-0 text-sm font-semibold text-slate-700 sm:block md:ml-0">
-                {pageTitle}
-              </div>
-            )}
+            <div className="ml-3 hidden min-w-0 text-sm font-semibold text-slate-700 sm:block md:ml-0">
+              {pageTitle}
+            </div>
 
             <div className="ml-auto flex min-w-0 items-center gap-3 sm:gap-4">
               {!isAdmin && (
                 <NotificationBell unreadCount={unreadCount} onCountChange={setUnreadCount} />
               )}
-              <div className="hidden items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-50/80 px-2.5 py-1 text-xs font-medium text-emerald-700 sm:inline-flex">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Operational
-              </div>
-
-              <div className="hidden h-5 w-px bg-line sm:block" />
-
               <div className="flex items-center gap-3">
                 <div className="min-w-0 max-w-28 text-right sm:max-w-none">
                   <p className="truncate text-sm font-semibold text-slate-900 leading-tight">

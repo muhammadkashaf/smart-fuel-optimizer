@@ -6,3 +6,4 @@ export { Skeleton, PageSkeleton } from './Skeleton';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { PageHeader } from './PageHeader';
+export { default as RoleBadge } from './RoleBadge';

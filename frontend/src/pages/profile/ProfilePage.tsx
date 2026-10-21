@@ -1,14 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  ShieldCheck,
-  User as UserIcon,
-  Mail,
-  Phone,
-  Calendar,
-  Pencil,
-} from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getProfile, updateProfile } from '@/api/profileApi';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,79 +12,53 @@ import {
   Input,
   PageHeader,
   PageSkeleton,
+  RoleBadge,
   Spinner,
 } from '@/components/common';
 import { getErrorMessage } from '@/utils/errorHandler';
 import type { User } from '@/types';
 
-/** Format a date string as "Member since Mon YYYY" */
-function formatMemberSince(dateStr?: string): string | null {
-  if (!dateStr) return null;
-  try {
-    const date = new Date(dateStr);
-    return `Member since ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
-  } catch {
-    return null;
-  }
-}
-
 export default function ProfilePage() {
   const { updateUser } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
   const [error, setError] = useState('');
-
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-
-  // ----- Profile form (fullName + contactNumber only — email is read-only) -----
-  const profileForm = useForm({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      fullName: '',
-      contactNumber: '',
-    },
-  });
-
   const {
     formState: { isSubmitting: profileSubmitting, errors: profileErrors },
     register: profileRegister,
     handleSubmit: profileHandleSubmit,
     reset: profileReset,
-  } = profileForm;
+  } = useForm({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { fullName: '', contactNumber: '' },
+  });
 
-  useEffect(() => {
+  const loadProfile = useCallback(() => {
+    setError('');
     getProfile()
-      .then((r) => {
-        setProfile(r.data);
+      .then((response) => {
+        setProfile(response.data);
         profileReset({
-          fullName: r.data.fullName || '',
-          contactNumber: r.data.contactNumber || '',
+          fullName: response.data.fullName || '',
+          contactNumber: response.data.contactNumber || '',
         });
       })
-      .catch((e) => setError(getErrorMessage(e)));
+      .catch((reason) => setError(getErrorMessage(reason)));
   }, [profileReset]);
 
-  if (error) return <ErrorState message={error} />;
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  if (error) return <ErrorState message={error} retry={loadProfile} />;
   if (!profile) return <PageSkeleton />;
 
-  // Start editing personal info
-  const startEditingProfile = () => {
+  const resetToSaved = () =>
     profileReset({
       fullName: profile.fullName || '',
       contactNumber: profile.contactNumber || '',
     });
-    setIsEditingProfile(true);
-  };
 
-  // Cancel editing personal info
-  const cancelEditingProfile = () => {
-    profileReset({
-      fullName: profile.fullName || '',
-      contactNumber: profile.contactNumber || '',
-    });
-    setIsEditingProfile(false);
-  };
-
-  // Save profile — sends only fullName and contactNumber, never email
   const saveProfile = async (values: { fullName: string; contactNumber: string }) => {
     try {
       const { data } = await updateProfile({
@@ -100,187 +67,118 @@ export default function ProfilePage() {
       });
       setProfile(data.user);
       updateUser(data.user);
-      profileReset({
-        fullName: data.user.fullName,
-        contactNumber: data.user.contactNumber,
-      });
+      profileReset({ fullName: data.user.fullName, contactNumber: data.user.contactNumber });
       setIsEditingProfile(false);
       toast.success(data.message || 'Profile updated successfully');
-    } catch (e) {
-      toast.error(getErrorMessage(e));
-      // Keep in edit mode so user input is preserved
+    } catch (reason) {
+      toast.error(getErrorMessage(reason));
     }
   };
 
-  const memberSince = formatMemberSince(profile.createdAt);
-
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Account Settings"
-        subtitle="Manage your personal profile credentials and workspace security."
-      />
+    <div className="max-w-4xl space-y-6">
+      <PageHeader title="Profile" subtitle="Manage your account information." />
 
-      <div className="grid max-w-5xl gap-6 lg:grid-cols-[300px_1fr]">
-        {/* Left Profile Overview Card */}
-        <aside className="space-y-4">
-          <div className="app-panel p-6 text-center">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-slate-900 text-xl font-bold text-white shadow-xs ring-4 ring-slate-100">
-              {profile.fullName?.slice(0, 1).toUpperCase() || 'U'}
-            </div>
-            <h2 className="mt-4 text-base font-bold text-slate-900">{profile.fullName}</h2>
-            <p className="text-xs text-content-muted mt-0.5 truncate">{profile.email}</p>
-
-            <div className="mt-4 flex justify-center">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>{profile.role}</span>
-              </span>
-            </div>
-
-            <div className="mt-6 border-t border-line pt-4 text-left space-y-2.5 text-xs text-slate-600">
-              <div className="flex items-center gap-2.5">
-                <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span className="truncate">{profile.email}</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span>{profile.contactNumber || 'No phone set'}</span>
-              </div>
-              {memberSince && (
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span>{memberSince}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        {/* Right Edit Panels */}
-        <div className="space-y-6">
-          {/* ========================================================================= */}
-          {/* 1. PERSONAL DETAILS SECTION */}
-          {/* ========================================================================= */}
-          <section className="app-panel p-5 sm:p-7">
-            <div className="flex items-center justify-between border-b border-line pb-4">
-              <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent-soft text-accent">
-                  <UserIcon className="h-4 w-4" />
-                </div>
-                <div>
-                  <h2 className="text-base font-semibold text-slate-900">Personal information</h2>
-                  <p className="text-xs text-content-muted">
-                    {isEditingProfile
-                      ? 'Update your personal details below'
-                      : 'Your contact and account display information'}
-                  </p>
-                </div>
-              </div>
-
-              {!isEditingProfile && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={startEditingProfile}
-                  aria-label="Edit personal information"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  <span>Edit</span>
-                </Button>
-              )}
-            </div>
-
-            {!isEditingProfile ? (
-              /* READ-ONLY / DISPLAY STATE */
-              <div className="mt-5 space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-lg border border-line/70 bg-slate-50/60 p-3.5">
-                    <span className="field-label text-slate-500 block">Full name</span>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {profile.fullName || '—'}
-                    </p>
-                  </div>
-
-                  <div className="rounded-lg border border-line/70 bg-slate-50/60 p-3.5">
-                    <span className="field-label text-slate-500 block">Contact number</span>
-                    <p className="mt-1 font-mono text-sm font-semibold text-slate-900">
-                      {profile.contactNumber || '—'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-line/70 bg-slate-50/60 p-3.5">
-                  <div className="flex items-center justify-between">
-                    <span className="field-label text-slate-500 block">Email address</span>
-                  </div>
-                  <p className="mt-1 break-all text-sm font-semibold text-slate-900">
-                    {profile.email}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              /* EDIT MODE STATE */
-              <form onSubmit={profileHandleSubmit(saveProfile)} className="mt-5 space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    label="Full name"
-                    placeholder="Your full name"
-                    error={profileErrors.fullName?.message}
-                    {...profileRegister('fullName')}
-                  />
-                  <Input
-                    label="Contact number"
-                    type="tel"
-                    placeholder="+1 (555) 000-0000"
-                    error={profileErrors.contactNumber?.message}
-                    {...profileRegister('contactNumber')}
-                  />
-                </div>
-
-                {/* Email — permanently read-only */}
-                <div className="block">
-                  <div className="flex items-center justify-between">
-                    <label className="field-label text-slate-700">Email address</label>
-                  </div>
-                  <div className="relative mt-1.5">
-                    <input
-                      type="email"
-                      value={profile.email}
-                      readOnly
-                      disabled
-                      aria-label="Email address — read only"
-                      className="field-control"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="md"
-                    onClick={cancelEditingProfile}
-                    disabled={profileSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="md"
-                    disabled={profileSubmitting}
-                  >
-                    {profileSubmitting && <Spinner />}
-                    <span>Save changes</span>
-                  </Button>
-                </div>
-              </form>
-            )}
-          </section>
-
+      <section
+        className="app-panel flex min-w-0 flex-wrap items-center gap-4 p-5 sm:p-6"
+        aria-label="Account identity"
+      >
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-slate-900 text-xl font-bold text-white">
+          {profile.fullName?.slice(0, 1).toUpperCase() || 'U'}
         </div>
-      </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-lg font-semibold text-slate-900">{profile.fullName}</h2>
+          <p className="break-all text-sm text-content-muted">{profile.email}</p>
+        </div>
+        <RoleBadge role={profile.role} />
+      </section>
+
+      <section className="app-panel p-5 sm:p-6" aria-labelledby="account-details-title">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+          <div>
+            <h2 id="account-details-title" className="text-base font-semibold text-slate-900">
+              Account details
+            </h2>
+            <p className="mt-0.5 text-sm text-content-muted">Your saved account information.</p>
+          </div>
+          {!isEditingProfile && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                resetToSaved();
+                setIsEditingProfile(true);
+              }}
+            >
+              <Pencil aria-hidden="true" className="h-4 w-4" /> Edit details
+            </Button>
+          )}
+        </div>
+
+        {isEditingProfile ? (
+          <form onSubmit={profileHandleSubmit(saveProfile)} className="mt-5 space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Full name"
+                placeholder="Your full name"
+                error={profileErrors.fullName?.message}
+                {...profileRegister('fullName')}
+              />
+              <Input
+                label="Contact number"
+                type="tel"
+                placeholder="03XX XXXXXXX"
+                error={profileErrors.contactNumber?.message}
+                {...profileRegister('contactNumber')}
+              />
+            </div>
+            <div>
+              <p className="field-label">Email address</p>
+              <p className="mt-1 break-all text-sm text-slate-700">{profile.email}</p>
+              <p className="mt-1 text-xs text-content-muted">Email cannot be changed here.</p>
+            </div>
+            <div className="flex flex-wrap justify-end gap-3 border-t border-line pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  resetToSaved();
+                  setIsEditingProfile(false);
+                }}
+                disabled={profileSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={profileSubmitting}>
+                {profileSubmitting && <Spinner />} Save changes
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <dl className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+            <div>
+              <dt className="field-label">Full name</dt>
+              <dd className="mt-1 text-sm font-medium text-slate-900">
+                {profile.fullName || 'Not provided'}
+              </dd>
+            </div>
+            <div>
+              <dt className="field-label">Contact number</dt>
+              <dd className="mt-1 text-sm font-medium text-slate-900">
+                {profile.contactNumber || 'Not provided'}
+              </dd>
+            </div>
+            <div>
+              <dt className="field-label">Email address</dt>
+              <dd className="mt-1 break-all text-sm font-medium text-slate-900">{profile.email}</dd>
+            </div>
+            <div>
+              <dt className="field-label">Account role</dt>
+              <dd className="mt-1 text-sm font-medium text-slate-900">{profile.role}</dd>
+            </div>
+          </dl>
+        )}
+      </section>
     </div>
   );
 }

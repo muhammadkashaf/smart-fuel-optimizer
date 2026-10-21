@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Layers, ShieldCheck, Gauge, Zap } from 'lucide-react';
+import { CarFront, Layers, Route, Wallet } from 'lucide-react';
 
 export default function AuthFrame({
   title,
@@ -11,83 +11,60 @@ export default function AuthFrame({
   children: ReactNode;
 }) {
   return (
-    <main className="grid min-h-screen bg-canvas lg:grid-cols-[1.1fr_0.9fr]">
-      {/* Left Marketing Banner */}
-      <section className="relative hidden flex-col justify-between overflow-hidden bg-sidebar p-12 text-white lg:flex border-r border-sidebar-border">
-        {/* Subtle background glow */}
-        <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
-        <div className="absolute -bottom-20 right-0 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
-
-        {/* Brand logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-accent text-white shadow-xs">
-            <Layers className="h-5 w-5" />
-          </div>
-          <div>
-            <span className="block text-lg font-bold tracking-tight text-white">Smart Fuel</span>
-            <span className="text-xs text-slate-400 font-medium">Optimization & Resource Management</span>
-          </div>
+    <main className="grid min-h-screen min-w-0 bg-canvas lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section
+        className="relative hidden min-h-screen flex-col justify-between overflow-hidden bg-sidebar p-10 text-white lg:flex xl:p-14"
+        aria-label="SmartFuel overview"
+      >
+        <div className="pointer-events-none absolute -right-24 top-1/4 h-80 w-80 rounded-full border border-blue-400/10 bg-accent/5 blur-3xl" />
+        <div className="relative flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent text-white shadow-xs">
+            <Layers aria-hidden="true" className="h-5 w-5" />
+          </span>
+          <span>
+            <span className="block text-lg font-bold tracking-tight">SmartFuel</span>
+            <span className="block text-xs text-slate-400">Fuel & Vehicle Management</span>
+          </span>
         </div>
-
-        {/* Main pitch */}
-        <div className="relative z-10 max-w-lg space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-blue-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-            Smart Fuel Resource Management
-          </div>
-
-          <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
-            Complete visibility over your entire vehicle ecosystem.
+        <div className="relative max-w-lg">
+          <p className="eyebrow text-blue-300">Your workspace</p>
+          <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight xl:text-4xl">
+            Keep every journey and fuel purchase in view.
           </h1>
-
-          <p className="text-base leading-relaxed text-slate-400">
-            Streamline fuel optimization, monitor consumption metrics, and manage vehicle resources with clear operational insights.
+          <p className="mt-4 max-w-md text-sm leading-6 text-slate-300">
+            Manage vehicles, record spending, and plan trips from one organized workspace.
           </p>
-
-          <div className="space-y-3.5 pt-4">
-            <div className="flex items-center gap-3 text-sm text-slate-300">
-              <div className="grid h-7 w-7 place-items-center rounded-md bg-white/10 text-accent">
-                <Gauge className="h-4 w-4" />
-              </div>
-              <span>Real-time fuel efficiency & consumption analytics</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-300">
-              <div className="grid h-7 w-7 place-items-center rounded-md bg-white/10 text-accent">
-                <ShieldCheck className="h-4 w-4" />
-              </div>
-              <span>Role-based access for administrators &amp; individual users</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-300">
-              <div className="grid h-7 w-7 place-items-center rounded-md bg-white/10 text-accent">
-                <Zap className="h-4 w-4" />
-              </div>
-              <span>Instant vehicle status and automated reporting</span>
-            </div>
+          <div className="mt-9 space-y-3 border-t border-white/10 pt-6 text-sm text-slate-300">
+            <p className="flex items-center gap-3">
+              <CarFront aria-hidden="true" className="h-4 w-4 text-blue-300" />
+              Keep vehicle details together
+            </p>
+            <p className="flex items-center gap-3">
+              <Wallet aria-hidden="true" className="h-4 w-4 text-blue-300" />
+              Track fuel spending by month
+            </p>
+            <p className="flex items-center gap-3">
+              <Route aria-hidden="true" className="h-4 w-4 text-blue-300" />
+              Plan and review journeys
+            </p>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-slate-400">
-          <p>© {new Date().getFullYear()} Smart Fuel System. All rights reserved.</p>
-          <span className="font-mono">v2.4.0</span>
-        </div>
+        <p className="relative text-xs text-slate-500">
+          SmartFuel · Fuel Optimization & Resource Management
+        </p>
       </section>
-
-      {/* Right Form Card Container */}
-      <section className="flex items-center justify-center p-4 sm:p-8 lg:p-12">
-        <div className="w-full max-w-md">
-          <div className="app-panel p-7 sm:p-9 shadow-panel">
-            <div className="mb-6">
-              {/* Mobile Brand Logo */}
-              <div className="mb-6 flex items-center gap-2.5 lg:hidden">
-                <div className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-white">
-                  <Layers className="h-4 w-4" />
-                </div>
-                <span className="text-base font-bold text-slate-900">Smart Fuel</span>
-              </div>
-
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
-              <p className="mt-1.5 text-sm text-content-muted">{text}</p>
+      <section className="flex min-w-0 flex-col items-center justify-center px-4 py-8 sm:px-8 lg:px-12">
+        <div className="w-full max-w-lg">
+          <div className="mb-6 flex items-center gap-2.5 lg:hidden">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent text-white">
+              <Layers aria-hidden="true" className="h-4 w-4" />
+            </span>
+            <span className="text-base font-bold tracking-tight text-content">SmartFuel</span>
+          </div>
+          <div className="app-panel dashboard-enter min-w-0 p-6 sm:p-8">
+            <div className="mb-7">
+              <h2 className="page-title">{title}</h2>
+              <p className="mt-2 text-sm leading-6 text-content-muted">{text}</p>
             </div>
             {children}
           </div>
