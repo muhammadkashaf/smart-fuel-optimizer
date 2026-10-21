@@ -5,6 +5,7 @@ export type User = {
   email: string;
   contactNumber: string;
   role: 'Individual' | 'Organizational' | 'Admin';
+  emailVerified?: boolean;
   createdAt?: string;
   updatedAt?: string;
   vehicleCount?: number;

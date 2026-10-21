@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import nodemailer from "nodemailer";
 import app from "../app.js";
 import User from "../models/User.js";
 import Vehicle from "../models/Vehicle.js";
@@ -16,6 +17,8 @@ import { estimateRoutes, routePlanStore, vehicleFingerprint } from "../services/
 
 dotenv.config();
 const dbName = `smartfuel_phase10_qa_${randomUUID().replaceAll("-", "").slice(0, 12)}`;
+const sentEmails = [];
+const originalTransport = nodemailer.createTransport;
 let server;
 let connected = false;
 let checks = 0;
@@ -27,6 +30,8 @@ const expect = (actual, expected, label) => {
 
 try {
   assert.ok(process.env.MONGO_URI && process.env.JWT_SECRET, "QA requires the existing backend environment");
+  Object.assign(process.env, { EMAIL_USER: "qa@example.test", EMAIL_APP_PASSWORD: "qa-app-password", EMAIL_FROM_NAME: "SmartFuel QA" });
+  nodemailer.createTransport = () => ({ sendMail: async (message) => { sentEmails.push(message); return { messageId: "qa" }; } });
   await mongoose.connect(process.env.MONGO_URI, { dbName });
   connected = true;
   assert.equal(mongoose.connection.name, dbName, "QA must use its isolated database");
@@ -60,6 +65,11 @@ try {
   const registeredB = await post("/auth/register", null, b);
   expect(registeredA.status, 201, "Individual registration");
   expect(registeredB.status, 201, "Organizational registration");
+  const userA = await User.findOne({ email: a.email });
+  const userB = await User.findOne({ email: b.email });
+  const codeFor = (email) => sentEmails.findLast((message) => message.to === email)?.text.match(/\b\d{6}\b/)?.[0];
+  expect((await post("/auth/verify-email", null, { email: a.email, otp: codeFor(a.email) })).status, 200, "Individual verification");
+  expect((await post("/auth/verify-email", null, { email: b.email, otp: codeFor(b.email) })).status, 200, "Organizational verification");
   expect((await post("/auth/register", null, a)).status, 400, "duplicate email");
   expect((await post("/auth/login", null, { email: a.email, password: "Wrong123" })).status, 401, "wrong password");
   expect((await post("/auth/login", null, { email: a.email, password: 12345678 })).status, 400, "malformed password");
@@ -69,7 +79,7 @@ try {
   assert.ok(tokenA && tokenB);
   expect((await get("/profile")).status, 401, "missing token");
   expect((await get("/profile", "malformed.qa.token")).status, 401, "malformed token");
-  const expired = jwt.sign({ id: registeredA.data.user.id }, process.env.JWT_SECRET, { expiresIn: -1 });
+  const expired = jwt.sign({ id: userA._id }, process.env.JWT_SECRET, { expiresIn: -1 });
   expect((await get("/profile", expired)).status, 401, "expired token");
   expect((await get("/profile", tokenA)).status, 200, "authenticated profile");
   expect((await put("/profile", tokenA, { fullName: "QA Individual Updated" })).status, 200, "profile update");
@@ -79,6 +89,29 @@ try {
   const adminA = await User.create({ fullName: "QA Admin A", email: `qa-admin-a-${dbName}@example.test`, contactNumber: "03001234567", role: "Admin", password: await bcrypt.hash("Testpass123", 10) });
   const adminB = await User.create({ fullName: "QA Admin B", email: `qa-admin-b-${dbName}@example.test`, contactNumber: "03001234567", role: "Admin", password: await bcrypt.hash("Testpass123", 10) });
   const adminToken = (await post("/auth/login", null, { email: adminA.email, password: "Testpass123" })).data.token;
+  const memberProfile = (await get("/profile", tokenA)).data;
+  expect(memberProfile.role, "Individual", "Individual profile role");
+  expect(memberProfile.emailVerified, true, "verified email status appears in Profile");
+  assert.ok(memberProfile.createdAt, "Profile includes member-since date");
+  expect((await get("/profile", tokenB)).data.role, "Organizational", "Organizational profile role");
+  expect((await get("/profile", adminToken)).data.role, "Admin", "Admin profile role");
+  expect((await put("/profile", tokenA, { password: "Bypass123" })).status, 400, "Profile edit cannot bypass current-password check");
+  expect((await put("/profile/password", null, { currentPassword: "Testpass123", newPassword: "Changed123", confirmPassword: "Changed123" })).status, 401, "password change requires authentication");
+  expect((await put("/profile/password", tokenA, { currentPassword: "Wrong123", newPassword: "Changed123", confirmPassword: "Changed123" })).status, 400, "wrong current password rejected");
+  expect((await put("/profile/password", tokenA, { currentPassword: "Testpass123", newPassword: "weak", confirmPassword: "weak" })).status, 400, "weak new password rejected");
+  expect((await put("/profile/password", tokenA, { currentPassword: "Testpass123", newPassword: "Changed123", confirmPassword: "Mismatch123" })).status, 400, "confirmation mismatch rejected");
+  expect((await put("/profile/password", tokenA, { currentPassword: "Testpass123", newPassword: "Testpass123", confirmPassword: "Testpass123" })).status, 400, "same password rejected");
+  const changedPassword = await put("/profile/password", tokenA, { currentPassword: "Testpass123", newPassword: "Changed123", confirmPassword: "Changed123" });
+  expect(changedPassword.status, 200, "Individual password changed");
+  expect(changedPassword.data.password, undefined, "password hash excluded from response");
+  expect((await post("/auth/login", null, { email: a.email, password: "Testpass123" })).status, 401, "old Individual password rejected");
+  expect((await post("/auth/login", null, { email: a.email, password: "Changed123" })).status, 200, "new Individual password works");
+  expect((await get("/profile", tokenA)).status, 200, "current session stays signed in after password change");
+  expect((await put("/profile/password", tokenB, { currentPassword: "Changed123", newPassword: "Orgchanged123", confirmPassword: "Orgchanged123" })).status, 400, "user cannot change another account with its password");
+  expect((await put("/profile/password", tokenB, { currentPassword: "Testpass123", newPassword: "Orgchanged123", confirmPassword: "Orgchanged123" })).status, 200, "Organizational password changed");
+  expect((await post("/auth/login", null, { email: b.email, password: "Orgchanged123" })).status, 200, "new Organizational password works");
+  expect((await put("/profile/password", adminToken, { currentPassword: "Testpass123", newPassword: "Adminchanged123", confirmPassword: "Adminchanged123" })).status, 200, "Admin changes own password");
+  expect((await post("/auth/login", null, { email: adminA.email, password: "Adminchanged123" })).status, 200, "new Admin password works");
   expect((await get("/admin/stats", tokenA)).status, 403, "member cannot read Admin stats");
   expect((await get("/vehicles", adminToken)).status, 403, "Admin cannot use member vehicle API");
   expect((await get("/fuel-records", adminToken)).status, 403, "Admin cannot use member records API");
@@ -132,7 +165,7 @@ try {
   expect((await get(`${period}/summary`, tokenA)).data.percentageUsed, 84, "approaching budget");
   expect((await get(`/budgets/2026/11/previous`, tokenA)).data.budget.amount, 10000, "previous budget lookup");
   expect((await put("/budgets/2026/11", tokenA, { amount: 10000 })).status, 200, "future month can copy previous limit");
-  expect(await Budget.countDocuments({ userId: registeredA.data.user.id, year: 2026, month: 11 }), 1, "copied month has one independent budget");
+  expect(await Budget.countDocuments({ userId: userA._id, year: 2026, month: 11 }), 1, "copied month has one independent budget");
   expect((await get(period, tokenA)).data.budget.amount, 10000, "copy leaves previous month unchanged");
 
   const trip = (vehicleId, tripDate) => ({ vehicleId, startLocation: "Karachi Airport", destination: "Clifton Karachi", tripDate, priority: "Essential", status: "Planned" });
@@ -153,7 +186,7 @@ try {
   expect(routeOptions[0].isRecommended, true, "lowest resource route recommended");
   expect(routeOptions[1].isFastest, true, "fastest alternative identified");
   const planId = routePlanStore.put({
-    userId: String(registeredA.data.user.id), tripId: tripA._id,
+    userId: String(userA._id), tripId: tripA._id,
     tripVersion: new Date(tripA.updatedAt).toISOString(), vehicleFingerprint: vehicleFingerprint(vehicleA),
     start: { label: "Karachi Airport", coordinates: { lat: 24.9065, lng: 67.1608 } },
     destination: { label: "Clifton Karachi", coordinates: { lat: 24.8138, lng: 67.0299 } },
@@ -217,8 +250,8 @@ try {
   expect((await del(`/fuel-records/${recordA1._id}`, tokenA)).status, 200, "fuel record deletion");
   expect((await get(`${period}/summary`, tokenA)).data.spent, 5600, "deleted record recalculates spending");
   expect((await del(`/vehicles/${vehicleElectric._id}`, tokenA)).status, 200, "unlinked vehicle deletion");
-  expect((await del(`/admin/users/${registeredB.data.user.id}`, adminToken)).status, 200, "Admin deletes another user's account");
-  const removedUserId = registeredB.data.user.id;
+  expect((await del(`/admin/users/${userB._id}`, adminToken)).status, 200, "Admin deletes another user's account");
+  const removedUserId = userB._id;
   for (const model of [User, Vehicle, FuelRecord, Trip, Budget, Notification]) {
     const filter = model === User ? { _id: removedUserId } : { userId: removedUserId };
     expect(await model.countDocuments(filter), 0, `${model.modelName} records cleared with deleted user`);
@@ -236,4 +269,5 @@ try {
     await mongoose.connection.dropDatabase();
     await mongoose.disconnect();
   }
+  nodemailer.createTransport = originalTransport;
 }

@@ -1,15 +1,17 @@
-import { useId, type InputHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes, type ReactNode } from 'react';
 
 export const Input = ({
   label,
   error,
   hint,
+  endAdornment,
   className = '',
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   error?: string;
   hint?: string;
+  endAdornment?: ReactNode;
 }) => {
   const generatedId = useId();
   const id = props.id ?? generatedId;
@@ -25,7 +27,7 @@ export const Input = ({
         <input
           id={id}
           aria-invalid={Boolean(error) || undefined}
-          className={`field-control ${props.type === 'date' ? 'cursor-pointer' : ''} ${error ? '!border-danger focus:!border-danger focus:!ring-danger/15' : ''} ${className}`}
+          className={`field-control ${endAdornment ? 'pr-12' : ''} ${props.type === 'date' ? 'cursor-pointer' : ''} ${error ? '!border-danger focus:!border-danger focus:!ring-danger/15' : ''} ${className}`}
           {...props}
           onClick={
             props.type === 'date'
@@ -46,6 +48,7 @@ export const Input = ({
               : props.onClick
           }
         />
+        {endAdornment && <div className="absolute inset-y-0 right-1 flex items-center">{endAdornment}</div>}
       </div>
       {error && (
         <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-danger">

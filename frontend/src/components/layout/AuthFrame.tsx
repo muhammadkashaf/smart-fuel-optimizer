@@ -5,10 +5,12 @@ export default function AuthFrame({
   title,
   text,
   children,
+  compact = false,
 }: {
   title: string;
   text: string;
   children: ReactNode;
+  compact?: boolean;
 }) {
   return (
     <main className="grid min-h-screen min-w-0 bg-canvas lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -54,7 +56,7 @@ export default function AuthFrame({
         </p>
       </section>
       <section className="flex min-w-0 flex-col items-center justify-center px-4 py-8 sm:px-8 lg:px-12">
-        <div className="w-full max-w-lg">
+        <div className={`w-full ${compact ? 'max-w-md' : 'max-w-lg'}`}>
           <div className="mb-6 flex items-center gap-2.5 lg:hidden">
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent text-white">
               <Layers aria-hidden="true" className="h-4 w-4" />
@@ -62,7 +64,7 @@ export default function AuthFrame({
             <span className="text-base font-bold tracking-tight text-content">SmartFuel</span>
           </div>
           <div className="app-panel dashboard-enter min-w-0 p-6 sm:p-8">
-            <div className="mb-7">
+            <div className={compact ? 'mb-6' : 'mb-7'}>
               <h2 className="page-title">{title}</h2>
               <p className="mt-2 text-sm leading-6 text-content-muted">{text}</p>
             </div>

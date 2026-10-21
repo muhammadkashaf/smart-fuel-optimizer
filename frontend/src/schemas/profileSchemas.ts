@@ -6,15 +6,16 @@ export const profileSchema = z.object({
   contactNumber: z.string().regex(phoneRegex, 'Enter a valid contact number'),
 });
 
-export const passwordSchema = z
+export const changePasswordSchema = z
   .object({
-    password: z
+    currentPassword: z.string().min(1, 'Enter your current password'),
+    newPassword: z
       .string()
       .min(8, 'Password must be at least 8 characters')
       .regex(/\d/, 'Password must include a number'),
     confirmPassword: z.string(),
   })
-  .refine((v) => v.password === v.confirmPassword, {
+  .refine((v) => v.newPassword === v.confirmPassword, {
     path: ['confirmPassword'],
     message: 'Passwords do not match',
   });

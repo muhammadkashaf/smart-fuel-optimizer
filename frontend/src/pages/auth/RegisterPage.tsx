@@ -2,13 +2,14 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { isAxiosError } from 'axios';
 import { registerSchema } from '@/schemas/authSchemas';
 import { registerRequest } from '@/api/authApi';
-import { useAuth } from '@/hooks/useAuth';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { Building2, UserRound } from 'lucide-react';
 import { Button, Input, Spinner } from '@/components/common';
 import AuthFrame from '@/components/layout/AuthFrame';
+import { rememberFlowEmail, startResendCooldown } from '@/utils/authFlow';
 
 export default function RegisterPage() {
   const {
@@ -18,7 +19,6 @@ export default function RegisterPage() {
     reset,
     control,
   } = useForm({ resolver: zodResolver(registerSchema), defaultValues: { role: 'Individual' } });
-  const { login } = useAuth();
   const navigate = useNavigate();
   const selectedRole = useWatch({ control, name: 'role' });
 
@@ -27,11 +27,18 @@ export default function RegisterPage() {
       const payload = { ...values };
       delete payload.confirmPassword;
       const { data } = await registerRequest(payload);
-      login(data.token, data.user);
       reset();
       toast.success(data.message);
-      navigate('/dashboard');
+      rememberFlowEmail('verification', data.email);
+      startResendCooldown('verification', data.email);
+      navigate('/verify-email', { replace: true, state: { email: data.email, codeSent: true } });
     } catch (e) {
+      if (isAxiosError(e) && e.response?.data?.verificationRequired) {
+        toast.error(getErrorMessage(e));
+        rememberFlowEmail('verification', e.response.data.email);
+        navigate('/verify-email', { replace: true, state: { email: e.response.data.email, deliveryFailed: true } });
+        return;
+      }
       toast.error(getErrorMessage(e));
     }
   };
@@ -123,7 +130,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="pt-2">
-          <Button disabled={isSubmitting} size="lg" className="w-full">
+          <Button disabled={isSubmitting} aria-busy={isSubmitting} size="lg" className="w-full">
             {isSubmitting && <Spinner />}
             <span>Create account</span>
           </Button>
