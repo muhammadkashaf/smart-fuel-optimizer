@@ -8,6 +8,9 @@ import AdminRoute from './AdminRoute';
 import IndividualRoute from './IndividualRoute';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
+import VerifyEmailPage from '@/pages/auth/VerifyEmailPage';
+import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import CrisisModePage from '@/pages/crisis/CrisisModePage';
 import FuelBudgetPage from '@/pages/budgets/FuelBudgetPage';
@@ -26,13 +29,15 @@ import AdminVehiclesPage from '@/pages/admin/AdminVehiclesPage';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { useAuth } from '@/hooks/useAuth';
+import AuthLoading from './AuthLoading';
 
 const RoutePlannerPage = lazy(() => import('@/pages/trips/RoutePlannerPage'));
 const AnalyticsPage = lazy(() => import('@/pages/analytics/AnalyticsPage'));
 const NotificationsPage = lazy(() => import('@/pages/notifications/NotificationsPage'));
 
 function RoleAwareRedirect() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isInitializing } = useAuth();
+  if (isInitializing) return <AuthLoading />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <Navigate to={user?.role === 'Admin' ? '/admin' : '/dashboard'} replace />;
 }
@@ -56,6 +61,9 @@ export default function AppRoutes() {
           </GuestRoute>
         }
       />
+      <Route path="/verify-email" element={<GuestRoute><VerifyEmailPage /></GuestRoute>} />
+      <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+      <Route path="/reset-password" element={<GuestRoute><ResetPasswordPage /></GuestRoute>} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           {/* Member-only routes redirect Admin to the system overview */}

@@ -1,5 +1,9 @@
 import User from "../models/User.js";
 import Vehicle from "../models/Vehicle.js";
+import FuelRecord from "../models/FuelRecord.js";
+import Trip from "../models/Trip.js";
+import Budget from "../models/Budget.js";
+import Notification from "../models/Notification.js";
 import { isValidContactNumber, isValidEmail, isPositiveNumber, isValidYear } from "../utils/validation.js";
 import { syncNotificationsForVehicle } from "../services/notificationService.js";
 
@@ -198,13 +202,17 @@ export const deleteUser = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Delete all vehicles owned by this user
+    // Remove owned data before deleting the account so no inaccessible records remain.
+    await Promise.all([
+      FuelRecord.deleteMany({ userId: user._id }),
+      Trip.deleteMany({ userId: user._id }),
+      Budget.deleteMany({ userId: user._id }),
+      Notification.deleteMany({ userId: user._id }),
+    ]);
     await Vehicle.deleteMany({ userId: user._id });
-
-    // Delete user
     await user.deleteOne();
 
-    res.json({ message: "User and associated vehicle records removed successfully" });
+    res.json({ message: "User and associated records removed successfully" });
   } catch (error) {
     next(error);
   }
@@ -305,6 +313,14 @@ export const deleteAdminVehicle = async (req, res, next) => {
     const vehicle = await Vehicle.findById(req.params.id);
     if (!vehicle) {
       return res.status(404).json({ message: "Vehicle not found" });
+    }
+
+    const [hasFuelRecords, hasTrips] = await Promise.all([
+      FuelRecord.exists({ vehicleId: vehicle._id }),
+      Trip.exists({ vehicleId: vehicle._id }),
+    ]);
+    if (hasFuelRecords || hasTrips) {
+      return res.status(409).json({ message: "Delete this vehicle's fuel records and trips before removing it." });
     }
 
     await vehicle.deleteOne();

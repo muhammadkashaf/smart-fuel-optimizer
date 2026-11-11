@@ -22,3 +22,18 @@ export const registerSchema = z
     path: ['confirmPassword'],
     message: 'Passwords do not match',
   });
+
+const emailField = z.string().email('Enter a valid email');
+const otpField = z.string().regex(/^\d{6}$/, 'Enter the 6-digit code');
+
+export const verifyEmailSchema = z.object({ email: emailField, otp: otpField });
+export const forgotPasswordSchema = z.object({ email: emailField });
+export const newPasswordSchema = z
+  .object({
+    newPassword: z.string().min(8, 'Password must be at least 8 characters').regex(/\d/, 'Password must include a number'),
+    confirmPassword: z.string(),
+  })
+  .refine((values) => values.newPassword === values.confirmPassword, {
+    path: ['confirmPassword'],
+    message: 'Passwords do not match',
+  });

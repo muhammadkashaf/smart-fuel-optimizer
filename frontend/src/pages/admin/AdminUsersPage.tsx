@@ -22,11 +22,11 @@ import {
 } from '@/api/adminApi';
 import {
   Button,
-  EmptyState,
   ErrorState,
   Input,
   PageHeader,
   PageSkeleton,
+  RoleBadge,
   Select,
   Spinner,
 } from '@/components/common';
@@ -147,7 +147,7 @@ export default function AdminUsersPage() {
       {/* Header */}
       <PageHeader
         title="Manage Users"
-        subtitle="View and manage other registered accounts. Update your own details in Profile."
+        subtitle="Manage member accounts and access roles."
       />
 
       {/* Search Bar Toolbar */}
@@ -161,7 +161,7 @@ export default function AdminUsersPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or email..."
+            placeholder="Search users..."
             aria-label="Search users by name or email"
             className="h-10 w-full rounded-lg border border-line bg-slate-50/50 pl-10 pr-9 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-accent focus:bg-white focus:ring-3 focus:ring-accent/15"
           />
@@ -206,11 +206,9 @@ export default function AdminUsersPage() {
         </div>
 
         {users.length === 0 ? (
-          <div className="p-8">
-            <EmptyState
-              title="No other users to manage"
-              description="Other registered accounts will appear here. Manage your own details in Profile."
-            />
+          <div className="px-5 py-12 text-center">
+            <h3 className="text-sm font-semibold text-slate-900">No other users to manage</h3>
+            <p className="mt-1 text-sm text-content-muted">Other registered accounts will appear here. Manage your own details in Profile.</p>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="p-12 text-center">
@@ -227,16 +225,30 @@ export default function AdminUsersPage() {
               </Button>
             </div>
           </div>
-        ) : (
-          <div className="max-w-full overflow-x-auto">
+        ) : (<>
+          <div className="divide-y divide-line md:hidden">
+            {filteredUsers.map((u) => <div key={u.id || u._id} className="space-y-3 p-4">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-900 text-xs font-bold text-white">{u.fullName?.slice(0, 1).toUpperCase() || 'U'}</span>
+                <div className="min-w-0 flex-1"><p className="font-semibold text-slate-900">{u.fullName}</p><p className="break-all text-xs text-content-muted">{u.email}</p></div>
+                <RoleBadge role={u.role} />
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 pl-12 text-xs text-content-muted"><span>Joined {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-PK') : 'N/A'}</span><span>{u.vehicleCount ?? 0} vehicles</span></div>
+              <div className="flex justify-end gap-2 border-t border-line/70 pt-3">
+                <Button variant="secondary" size="sm" onClick={() => handleViewUser(u.id || u._id || '')}>View</Button>
+                <Button variant="secondary" size="sm" onClick={() => openEditModal(u)}>Edit</Button>
+                <Button variant="secondary" size="sm" onClick={() => setDeletingUser(u)}>Delete</Button>
+              </div>
+            </div>)}
+          </div>
+          <div className="hidden max-w-full overflow-x-auto md:block">
             <table className="w-full min-w-[780px] text-left text-sm">
               <thead>
                 <tr className="border-b border-line bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
                   <th className="px-5 py-3.5">User</th>
-                  <th className="px-4 py-3.5">Contact Number</th>
+                  <th className="px-4 py-3.5">Email</th>
                   <th className="px-4 py-3.5">Role</th>
-                  <th className="px-4 py-3.5">Registered</th>
-                  <th className="px-4 py-3.5">Vehicles</th>
+                  <th className="px-4 py-3.5">Joined</th>
                   <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
@@ -250,35 +262,16 @@ export default function AdminUsersPage() {
                         </div>
                         <div className="min-w-0">
                           <div className="break-words font-semibold text-slate-900">{u.fullName}</div>
-                          <div className="break-all text-xs text-content-muted">{u.email}</div>
                         </div>
                       </div>
                     </td>
+                    <td className="max-w-52 break-all px-4 py-4 text-xs text-content-muted">{u.email}</td>
                     <td className="px-4 py-4">
-                      <span className="text-xs text-slate-700 font-mono">
-                        {u.contactNumber || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${
-                          u.role === 'Admin'
-                            ? 'bg-purple-50 text-purple-700 border-purple-200'
-                            : 'bg-slate-100 text-slate-700 border-slate-200'
-                        }`}
-                      >
-                        {u.role === 'Admin' && <ShieldCheck className="h-3 w-3" />}
-                        {u.role}
-                      </span>
+                      <RoleBadge role={u.role} />
                     </td>
                     <td className="px-4 py-4">
                       <span className="text-xs text-content-muted">
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="inline-flex items-center justify-center rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-slate-800">
-                        {u.vehicleCount ?? 0}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-right">
@@ -314,14 +307,14 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
-        )}
+        </>)}
       </div>
 
       {/* ========================================================================= */}
       {/* MODAL 1: VIEW USER DETAILS & THEIR VEHICLES */}
       {/* ========================================================================= */}
       {viewingUser && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
+        <div role="dialog" aria-modal="true" aria-label="User details" className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
           <div className="w-full max-w-2xl rounded-2xl border border-line bg-surface p-6 shadow-overlay sm:p-7 space-y-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between border-b border-line pb-4">
               <div className="flex items-center gap-3">
@@ -335,6 +328,7 @@ export default function AdminUsersPage() {
               </div>
               <button
                 onClick={() => setViewingUser(null)}
+                aria-label="Close user details"
                 className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
               >
                 <X className="h-4 w-4" />
@@ -423,7 +417,7 @@ export default function AdminUsersPage() {
       {/* MODAL 2: EDIT USER (React Hook Form + Zod Validated) */}
       {/* ========================================================================= */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
+        <div role="dialog" aria-modal="true" aria-label="Edit user" className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-2xl border border-line bg-surface p-6 shadow-overlay sm:p-7">
             <div className="flex items-center justify-between border-b border-line pb-4">
               <div>
@@ -432,6 +426,7 @@ export default function AdminUsersPage() {
               </div>
               <button
                 onClick={() => setEditingUser(null)}
+                aria-label="Close edit user dialog"
                 className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
               >
                 <X className="h-4 w-4" />
@@ -487,7 +482,7 @@ export default function AdminUsersPage() {
       {/* MODAL 3: DELETE USER CONFIRMATION */}
       {/* ========================================================================= */}
       {deletingUser && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
+        <div role="alertdialog" aria-modal="true" aria-label="Delete user" className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
           <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-6 shadow-overlay sm:p-7">
             <div className="flex items-start gap-4">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-danger-soft text-danger ring-8 ring-red-50">

@@ -1,10 +1,10 @@
 import express from "express";
 const router = express.Router();
 
-import { verifyToken } from "../middleware/auth.js";
+import { verifyToken, checkRole } from "../middleware/auth.js";
 import * as vehicleController from "../controllers/vehicleController.js";
 
-router.use(verifyToken);
+router.use("/vehicles", verifyToken, checkRole("Individual", "Organizational"));
 
 router.post("/vehicles", vehicleController.createVehicle);
 router.get("/vehicles", vehicleController.getVehicles);

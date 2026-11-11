@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getCrisisMode, getCrisisRecommendations, setCrisisMode } from '@/api/crisisModeApi';
-import { Button, Spinner } from '@/components/common';
+import { Button, Skeleton, Spinner } from '@/components/common';
 import { getErrorMessage } from '@/utils/errorHandler';
 
 export default function DashboardCrisisMode() {
@@ -66,7 +66,7 @@ export default function DashboardCrisisMode() {
           <h2 className="text-base font-semibold text-slate-900">Crisis Mode</h2>
           {status === 'ready' && <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{enabled ? 'ON' : 'OFF'}</span>}
         </div>
-        {status === 'loading' && <p role="status" className="mt-1 flex items-center gap-2 text-sm text-content-muted"><Spinner />{saving ? 'Enabling Crisis Mode...' : 'Loading conservation guidance...'}</p>}
+        {status === 'loading' && (saving ? <p role="status" className="mt-1 flex items-center gap-2 text-sm text-content-muted"><Spinner />Enabling Crisis Mode...</p> : <div role="status" aria-label="Loading conservation guidance" className="mt-2 space-y-2"><Skeleton className="h-3 w-40" /><Skeleton className="h-3 w-48 max-w-full" /></div>)}
         {status === 'error' && <p role="alert" className="mt-1 text-sm text-content-muted">Could not load Crisis Mode guidance.</p>}
         {status === 'ready' && (enabled ? count > 0 ? (
           <p className="mt-1 text-sm text-content-muted">{count} recommendation{count === 1 ? '' : 's'} for your planned trips</p>

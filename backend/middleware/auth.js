@@ -13,10 +13,16 @@ export const verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     User.findById(decoded.id)
-      .select("_id fullName email contactNumber role")
+      .select("_id fullName email contactNumber role emailVerified +tokenVersion")
       .then((user) => {
         if (!user) {
           return res.status(401).json({ message: "We could not verify your account" });
+        }
+        if (user.emailVerified === false) {
+          return res.status(403).json({ code: "EMAIL_NOT_VERIFIED", message: "Verify your email before continuing." });
+        }
+        if ((decoded.v ?? 0) !== (user.tokenVersion ?? 0)) {
+          return res.status(401).json({ message: "Your session has expired. Sign in again." });
         }
 
         req.user = user;
@@ -24,6 +30,9 @@ export const verifyToken = (req, res, next) => {
       })
       .catch((error) => next(error));
   } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: "Your session is invalid or expired. Sign in again." });
+    }
     return next(error);
   }
 };

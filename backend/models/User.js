@@ -29,6 +29,17 @@ const userSchema = new mongoose.Schema(
       required: true,
       select: false,
     },
+    // Legacy accounts have no flag and remain verified; new registrations set false explicitly.
+    emailVerified: { type: Boolean, default: true },
+    emailVerificationOtpHash: { type: String, select: false },
+    emailVerificationOtpExpiresAt: { type: Date, select: false },
+    emailVerificationOtpAttempts: { type: Number, select: false },
+    emailVerificationOtpSentAt: { type: Date, select: false },
+    passwordResetOtpHash: { type: String, select: false },
+    passwordResetOtpExpiresAt: { type: Date, select: false },
+    passwordResetOtpAttempts: { type: Number, select: false },
+    passwordResetOtpSentAt: { type: Date, select: false },
+    tokenVersion: { type: Number, default: 0, select: false },
     crisisModeEnabled: {
       type: Boolean,
       default: false,

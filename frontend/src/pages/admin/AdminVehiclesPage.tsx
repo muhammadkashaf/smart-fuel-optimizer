@@ -17,7 +17,6 @@ import {
 } from '@/api/adminApi';
 import {
   Button,
-  EmptyState,
   ErrorState,
   Input,
   PageHeader,
@@ -151,7 +150,7 @@ export default function AdminVehiclesPage() {
       {/* Header */}
       <PageHeader
         title="Manage Vehicles"
-        subtitle="System-wide vehicle directory. Monitor, edit, and remove vehicle records across all user accounts."
+        subtitle="Review registered vehicles across the system."
       />
 
       {/* Search & Fuel Filter Toolbar */}
@@ -168,6 +167,7 @@ export default function AdminVehiclesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by registration number, vehicle name, manufacturer, or owner name/email..."
+              aria-label="Search vehicles by name, registration, manufacturer, or owner"
               className="h-10 w-full rounded-lg border border-line bg-slate-50/50 pl-10 pr-9 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-accent focus:bg-white focus:ring-3 focus:ring-accent/15"
             />
             {search && (
@@ -220,11 +220,9 @@ export default function AdminVehiclesPage() {
         </div>
 
         {vehicles.length === 0 ? (
-          <div className="p-8">
-            <EmptyState
-              title="No vehicles in system"
-              description="No vehicle records are currently registered across any user account."
-            />
+          <div className="px-5 py-12 text-center">
+            <h3 className="text-sm font-semibold text-slate-900">No vehicles in system</h3>
+            <p className="mt-1 text-sm text-content-muted">No vehicle records are currently registered across any user account.</p>
           </div>
         ) : filteredVehicles.length === 0 ? (
           <div className="p-12 text-center">
@@ -248,8 +246,21 @@ export default function AdminVehiclesPage() {
               </Button>
             </div>
           </div>
-        ) : (
-          <div className="max-w-full overflow-x-auto">
+        ) : (<>
+          <div className="divide-y divide-line md:hidden">
+            {filteredVehicles.map((v) => {
+              const owner = v.userId && typeof v.userId === 'object' ? v.userId : null;
+              return <div key={v._id} className="space-y-3 p-4">
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="min-w-0"><p className="font-semibold text-slate-900">{v.vehicleName}</p><p className="text-xs text-content-muted">{v.registrationNumber} · {v.manufacturer} {v.modelYear}</p></div>
+                  <VehicleBadge fuel={v.fuelType} />
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs"><div><p className="text-content-muted">Owner</p><p className="mt-0.5 font-medium text-slate-900">{owner?.fullName || 'Unknown / deleted user'}</p>{owner?.email && <p className="break-all text-content-muted">{owner.email}</p>}</div><div><p className="text-content-muted">Efficiency / capacity</p><p className="mt-0.5 font-medium text-slate-900">{v.fuelEfficiency} {v.fuelType === 'Electric' ? 'km/kWh' : 'km/L'} · {v.fuelTankCapacity} {v.fuelType === 'Electric' ? 'kWh' : 'L'}</p></div></div>
+                <div className="flex justify-end gap-2 border-t border-line/70 pt-3"><Button variant="secondary" size="sm" onClick={() => openEditModal(v)}>Edit</Button><Button variant="secondary" size="sm" onClick={() => setDeletingVehicle(v)}>Delete</Button></div>
+              </div>;
+            })}
+          </div>
+          <div className="hidden max-w-full overflow-x-auto md:block">
             <table className="w-full min-w-[830px] text-left text-sm">
               <thead>
                 <tr className="border-b border-line bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -327,14 +338,14 @@ export default function AdminVehiclesPage() {
               </tbody>
             </table>
           </div>
-        )}
+        </>)}
       </div>
 
       {/* ========================================================================= */}
       {/* MODAL 1: EDIT VEHICLE (React Hook Form + Zod Validated) */}
       {/* ========================================================================= */}
       {editingVehicle && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
+        <div role="dialog" aria-modal="true" aria-label="Edit vehicle" className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-2xl border border-line bg-surface p-6 shadow-overlay sm:p-7 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-line pb-4">
               <div>
@@ -348,6 +359,7 @@ export default function AdminVehiclesPage() {
               </div>
               <button
                 onClick={() => setEditingVehicle(null)}
+                aria-label="Close edit vehicle dialog"
                 className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
               >
                 <X className="h-4 w-4" />
@@ -436,7 +448,7 @@ export default function AdminVehiclesPage() {
       {/* MODAL 2: DELETE VEHICLE CONFIRMATION */}
       {/* ========================================================================= */}
       {deletingVehicle && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
+        <div role="alertdialog" aria-modal="true" aria-label="Delete vehicle" className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs">
           <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-6 shadow-overlay sm:p-7">
             <div className="flex items-start gap-4">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-danger-soft text-danger ring-8 ring-red-50">

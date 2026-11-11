@@ -1,20 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
+import ListSkeleton from '@/components/common/ListSkeleton';
 import { Link } from 'react-router-dom';
 import { Fuel, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { deleteFuelRecord, getFuelRecords } from '@/api/fuelRecordApi';
 import { getVehicles } from '@/api/vehicleApi';
-import { Button, EmptyState, ErrorState, PageHeader, PageSkeleton, Select } from '@/components/common';
+import { Button, EmptyState, ErrorState, PageHeader, Select } from '@/components/common';
 import VehicleActions from '@/components/vehicles/VehicleActions';
 import DeleteVehicleModal from '@/components/vehicles/DeleteVehicleModal';
 import type { FuelRecord, Vehicle } from '@/types';
 import { getErrorMessage } from '@/utils/errorHandler';
 
-const money = new Intl.NumberFormat('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money = new Intl.NumberFormat('en-PK', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 const liters = new Intl.NumberFormat('en-PK', { maximumFractionDigits: 3 });
 const displayDate = (value: string) =>
   new Date(`${value.slice(0, 10)}T00:00:00`).toLocaleDateString('en-PK', {
-    day: '2-digit', month: 'short', year: 'numeric',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
   });
 const vehicleName = (record: FuelRecord) =>
   typeof record.vehicleId === 'string' ? 'Vehicle unavailable' : record.vehicleId.vehicleName;
@@ -68,24 +74,31 @@ export default function FuelRecordListPage() {
 
   const selectedVehicle = vehicles.find((vehicle) => vehicle._id === vehicleFilter);
   const visibleRecords = vehicleFilter
-    ? records.filter((record) =>
-        (typeof record.vehicleId === 'string' ? record.vehicleId : record.vehicleId._id) === vehicleFilter,
+    ? records.filter(
+        (record) =>
+          (typeof record.vehicleId === 'string' ? record.vehicleId : record.vehicleId._id) ===
+          vehicleFilter,
       )
     : records;
 
-  if (status === 'loading') return <PageSkeleton />;
+  if (status === 'loading') return <ListSkeleton label="Loading fuel records" />;
   if (status === 'error') return <ErrorState message={error} retry={load} />;
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5">
       <PageHeader
         title="Fuel records"
-        subtitle="Track fuel purchases for your vehicles."
-        action={vehicles.length > 0 && (
-          <Link to="/fuel-records/new">
-            <Button><Plus className="h-4 w-4" />Add fuel record</Button>
-          </Link>
-        )}
+        subtitle="Track fuel purchases and operating costs."
+        action={
+          vehicles.length > 0 && (
+            <Link to="/fuel-records/new">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Add fuel record
+              </Button>
+            </Link>
+          )
+        }
       />
 
       {vehicles.length === 0 ? (
@@ -93,7 +106,14 @@ export default function FuelRecordListPage() {
           icon={Fuel}
           title="Add a vehicle first"
           description="Register a vehicle before recording fuel purchases."
-          action={<Link to="/vehicles/new"><Button><Plus className="h-4 w-4" />Add vehicle</Button></Link>}
+          action={
+            <Link to="/vehicles/new">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Add vehicle
+              </Button>
+            </Link>
+          }
         />
       ) : (
         <div className="space-y-4">
@@ -113,17 +133,38 @@ export default function FuelRecordListPage() {
                 ))}
               </Select>
             </div>
+            {vehicleFilter && (
+              <Button variant="ghost" size="sm" onClick={() => setVehicleFilter('')}>
+                Reset filters
+              </Button>
+            )}
             <p aria-live="polite" className="text-xs font-medium text-content-muted">
-              Showing {visibleRecords.length} {selectedVehicle ? `for ${selectedVehicle.vehicleName}` : 'across all vehicles'}
+              Showing {visibleRecords.length}{' '}
+              {selectedVehicle ? `for ${selectedVehicle.vehicleName}` : 'across all vehicles'}
             </p>
           </div>
 
           {visibleRecords.length === 0 ? (
             <EmptyState
               icon={Fuel}
-              title={selectedVehicle ? `No fuel records for ${selectedVehicle.vehicleName}` : 'No fuel records yet'}
-              description={selectedVehicle ? 'This vehicle has no fuel purchases yet. Add a record or choose another vehicle.' : 'Add your first fuel purchase to start a history for your vehicles.'}
-              action={<Link to="/fuel-records/new"><Button><Plus className="h-4 w-4" />Add fuel record</Button></Link>}
+              title={
+                selectedVehicle
+                  ? `No fuel records for ${selectedVehicle.vehicleName}`
+                  : 'No fuel records yet'
+              }
+              description={
+                selectedVehicle
+                  ? 'This vehicle has no fuel purchases yet. Add a record or choose another vehicle.'
+                  : 'Add your first fuel purchase to start a history for your vehicles.'
+              }
+              action={
+                <Link to="/fuel-records/new">
+                  <Button>
+                    <Plus className="h-4 w-4" />
+                    Add fuel record
+                  </Button>
+                </Link>
+              }
             />
           ) : (
             <div className="app-panel overflow-hidden">
@@ -136,29 +177,39 @@ export default function FuelRecordListPage() {
                 </span>
               </div>
 
-              <div className="hidden overflow-x-auto md:block">
+              <div className="hidden overflow-x-auto xl:block">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-line bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
                       <th className="px-5 py-3.5">Date</th>
                       <th className="px-4 py-3.5">Vehicle</th>
-                      <th className="px-4 py-3.5">Quantity</th>
-                      <th className="px-4 py-3.5">Cost</th>
-                      <th className="px-4 py-3.5">Price per liter</th>
+                      <th className="px-4 py-3.5 text-right">Quantity</th>
+                      <th className="px-4 py-3.5 text-right">Cost</th>
+                      <th className="px-4 py-3.5 text-right">Price per liter</th>
                       <th className="px-5 py-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line/70">
                     {visibleRecords.map((record) => (
                       <tr key={record._id} className="transition-colors hover:bg-slate-50/70">
-                        <td className="px-5 py-4 font-medium text-slate-900">{displayDate(record.date)}</td>
+                        <td className="px-5 py-4 font-medium text-slate-900">
+                          {displayDate(record.date)}
+                        </td>
                         <td className="px-4 py-4">
                           <div className="font-semibold text-slate-900">{vehicleName(record)}</div>
-                          <div className="text-xs text-content-muted">{vehicleRegistration(record)}</div>
+                          <div className="text-xs text-content-muted">
+                            {vehicleRegistration(record)}
+                          </div>
                         </td>
-                        <td className="px-4 py-4 tabular-nums text-slate-800">{liters.format(record.quantity)} L</td>
-                        <td className="px-4 py-4 tabular-nums text-slate-800">PKR {money.format(record.cost)}</td>
-                        <td className="px-4 py-4 tabular-nums text-slate-800">PKR {money.format(record.cost / record.quantity)}</td>
+                        <td className="px-4 py-4 text-right tabular-nums text-slate-800">
+                          {liters.format(record.quantity)} L
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-slate-800">
+                          PKR {money.format(record.cost)}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-slate-800">
+                          PKR {money.format(record.cost / record.quantity)}
+                        </td>
                         <td className="px-5 py-4 text-right">
                           <VehicleActions
                             editTo={`/fuel-records/${record._id}/edit`}
@@ -173,15 +224,21 @@ export default function FuelRecordListPage() {
                 </table>
               </div>
 
-              <div className="divide-y divide-line md:hidden">
+              <div className="divide-y divide-line xl:hidden">
                 {visibleRecords.map((record) => (
                   <article key={record._id} className="space-y-3 p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-900">{vehicleName(record)}</h3>
-                        <p className="text-xs text-content-muted">{vehicleRegistration(record)} · {displayDate(record.date)}</p>
+                      <div className="min-w-0">
+                        <h3 className="line-clamp-2 break-words text-sm font-semibold text-slate-900">
+                          {vehicleName(record)}
+                        </h3>
+                        <p className="text-xs text-content-muted">
+                          {vehicleRegistration(record)} · {displayDate(record.date)}
+                        </p>
                       </div>
-                      <span className="text-sm font-semibold tabular-nums text-slate-900">PKR {money.format(record.cost)}</span>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900">
+                        PKR {money.format(record.cost)}
+                      </span>
                     </div>
                     <div className="flex flex-wrap gap-x-5 gap-y-1 rounded-lg bg-slate-50 p-2.5 text-xs text-slate-700">
                       <span>{liters.format(record.quantity)} L</span>
@@ -207,7 +264,11 @@ export default function FuelRecordListPage() {
         onClose={() => !deleting && setTarget(null)}
         onConfirm={confirmDelete}
         title="Delete fuel record"
-        description={target ? `Remove the ${displayDate(target.date)} fuel purchase for ${vehicleName(target)}? This cannot be undone.` : ''}
+        description={
+          target
+            ? `Remove the ${displayDate(target.date)} fuel purchase for ${vehicleName(target)}? This cannot be undone.`
+            : ''
+        }
         confirmLabel="Delete record"
       />
     </div>

@@ -1,46 +1,61 @@
-import type { InputHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes, type ReactNode } from 'react';
 
 export const Input = ({
   label,
   error,
   hint,
+  endAdornment,
   className = '',
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   error?: string;
   hint?: string;
-}) => (
-  <div className="block">
-    <div className="flex items-center justify-between">
-      <label className="field-label text-slate-700">{label}</label>
-    </div>
-    {hint && <p className="field-hint mb-1.5">{hint}</p>}
-    <div className="relative mt-1.5">
-      <input
-        className={`field-control ${props.type === 'date' ? 'cursor-pointer' : ''} ${error ? '!border-danger focus:!border-danger focus:!ring-danger/15' : ''} ${className}`}
-        {...props}
-        onClick={
-          props.type === 'date'
-            ? (event) => {
-                props.onClick?.(event);
-                if (event.defaultPrevented || event.currentTarget.disabled || event.currentTarget.readOnly) return;
-                try {
-                  event.currentTarget.showPicker?.();
-                } catch {
-                  // The native calendar icon remains available if showPicker is unsupported.
+  endAdornment?: ReactNode;
+}) => {
+  const generatedId = useId();
+  const id = props.id ?? generatedId;
+  return (
+    <div className="block">
+      <div className="flex items-center justify-between">
+        <label htmlFor={id} className="field-label text-slate-700">
+          {label}
+        </label>
+      </div>
+      {hint && <p className="field-hint mb-1.5">{hint}</p>}
+      <div className="relative mt-1.5">
+        <input
+          id={id}
+          aria-invalid={Boolean(error) || undefined}
+          className={`field-control ${endAdornment ? 'pr-12' : ''} ${props.type === 'date' ? 'cursor-pointer' : ''} ${error ? '!border-danger focus:!border-danger focus:!ring-danger/15' : ''} ${className}`}
+          {...props}
+          onClick={
+            props.type === 'date'
+              ? (event) => {
+                  props.onClick?.(event);
+                  if (
+                    event.defaultPrevented ||
+                    event.currentTarget.disabled ||
+                    event.currentTarget.readOnly
+                  )
+                    return;
+                  try {
+                    event.currentTarget.showPicker?.();
+                  } catch {
+                    // The native calendar icon remains available if showPicker is unsupported.
+                  }
                 }
-              }
-            : props.onClick
-        }
-      />
+              : props.onClick
+          }
+        />
+        {endAdornment && <div className="absolute inset-y-0 right-1 flex items-center">{endAdornment}</div>}
+      </div>
+      {error && (
+        <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-danger">
+          <span className="inline-block h-1 w-1 rounded-full bg-danger" />
+          {error}
+        </p>
+      )}
     </div>
-    {error && (
-      <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-danger">
-        <span className="inline-block h-1 w-1 rounded-full bg-danger" />
-        {error}
-      </p>
-    )}
-  </div>
-);
-
+  );
+};

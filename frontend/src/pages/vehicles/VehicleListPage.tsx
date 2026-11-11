@@ -1,15 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import ListSkeleton from '@/components/common/ListSkeleton';
 import { Link } from 'react-router-dom';
 import { CarFront, Fuel, Gauge, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { deleteVehicle, getVehicles } from '@/api/vehicleApi';
-import {
-  Button,
-  EmptyState,
-  ErrorState,
-  PageHeader,
-  PageSkeleton,
-} from '@/components/common';
+import { Button, EmptyState, ErrorState, PageHeader } from '@/components/common';
 import DeleteVehicleModal from '@/components/vehicles/DeleteVehicleModal';
 import VehicleBadge from '@/components/vehicles/VehicleBadge';
 import VehicleActions from '@/components/vehicles/VehicleActions';
@@ -68,16 +63,16 @@ export default function VehicleListPage() {
     }
   };
 
-  if (status === 'loading') return <PageSkeleton />;
+  if (status === 'loading') return <ListSkeleton label="Loading vehicles" />;
   if (status === 'error')
     return <ErrorState message="We couldn't load your vehicles." retry={load} />;
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5">
       {/* Page Header */}
       <PageHeader
-        title="Vehicles"
-        subtitle="Manage and monitor all your registered vehicles."
+        title="My Vehicles"
+        subtitle="Manage your registered vehicles and efficiency details."
         action={
           <Link to="/vehicles/new">
             <Button>
@@ -91,7 +86,7 @@ export default function VehicleListPage() {
       {vehicles.length === 0 ? (
         <EmptyState
           title="No vehicles registered"
-          description="You have no registered vehicles. Add your first vehicle to begin tracking performance and consumption."
+          description="Add your first vehicle to track purchases and plan your journeys."
           action={
             <Link to="/vehicles/new">
               <Button>
@@ -103,6 +98,21 @@ export default function VehicleListPage() {
         />
       ) : (
         <div className="space-y-4">
+          <dl
+            className="flex flex-wrap gap-x-6 gap-y-2 px-1 text-xs text-content-muted"
+            aria-label="Vehicle summary"
+          >
+            {['Total vehicles', 'Petrol', 'Diesel', 'Electric'].map((label) => (
+              <div key={label} className="flex items-baseline gap-2">
+                <dt>{label}</dt>
+                <dd className="text-sm font-semibold tabular-nums text-content">
+                  {label === 'Total vehicles'
+                    ? vehicles.length
+                    : vehicles.filter((vehicle) => vehicle.fuelType === label).length}
+                </dd>
+              </div>
+            ))}
+          </dl>
           {/* Search & Filter Toolbar */}
           <div className="app-panel p-3.5 sm:p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -114,6 +124,7 @@ export default function VehicleListPage() {
                 />
                 <input
                   type="text"
+                  aria-label="Search vehicles"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search by name, registration, or manufacturer..."
@@ -188,7 +199,7 @@ export default function VehicleListPage() {
             </div>
 
             {/* Desktop Table */}
-            <div className="hidden overflow-x-auto md:block">
+            <div className="hidden overflow-x-auto xl:block">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-line bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -202,12 +213,14 @@ export default function VehicleListPage() {
                 </thead>
                 <tbody className="divide-y divide-line/70">
                   {filtered.map((v) => (
-                    <tr
-                      key={v._id}
-                      className="transition-colors hover:bg-slate-50/70"
-                    >
+                    <tr key={v._id} className="transition-colors hover:bg-slate-50/70">
                       <td className="px-5 py-4">
-                        <div className="font-semibold text-slate-900">{v.vehicleName}</div>
+                        <div
+                          className="max-w-56 truncate font-semibold text-slate-900"
+                          title={v.vehicleName}
+                        >
+                          {v.vehicleName}
+                        </div>
                         <div className="text-xs text-content-muted mt-0.5">
                           {v.manufacturer} · {v.modelYear}
                         </div>
@@ -222,12 +235,18 @@ export default function VehicleListPage() {
                       </td>
                       <td className="px-4 py-4">
                         <span className="font-medium tabular-nums text-slate-800">
-                          {v.fuelEfficiency} <span className="text-xs text-slate-500 font-normal">{v.fuelType === 'Electric' ? 'km/kWh' : 'km/L'}</span>
+                          {v.fuelEfficiency}{' '}
+                          <span className="text-xs text-slate-500 font-normal">
+                            {v.fuelType === 'Electric' ? 'km/kWh' : 'km/L'}
+                          </span>
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <span className="font-medium tabular-nums text-slate-800">
-                          {v.fuelTankCapacity} <span className="text-xs text-slate-500 font-normal">{v.fuelType === 'Electric' ? 'kWh' : 'L'}</span>
+                          {v.fuelTankCapacity}{' '}
+                          <span className="text-xs text-slate-500 font-normal">
+                            {v.fuelType === 'Electric' ? 'kWh' : 'L'}
+                          </span>
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -240,7 +259,7 @@ export default function VehicleListPage() {
             </div>
 
             {/* Mobile Card List */}
-            <div className="divide-y divide-line md:hidden">
+            <div className="divide-y divide-line xl:hidden">
               {filtered.map((v) => (
                 <article key={v._id} className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
@@ -256,15 +275,21 @@ export default function VehicleListPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-2.5 text-xs text-slate-700">
-                    <span className="min-w-0 break-all font-mono font-medium">{v.registrationNumber}</span>
+                    <span className="min-w-0 break-all font-mono font-medium">
+                      {v.registrationNumber}
+                    </span>
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="flex items-center gap-1">
                         <Fuel className="h-3 w-3 text-slate-400" />
-                        <span className="font-medium tabular-nums">{v.fuelEfficiency} {v.fuelType === 'Electric' ? 'km/kWh' : 'km/L'}</span>
+                        <span className="font-medium tabular-nums">
+                          {v.fuelEfficiency} {v.fuelType === 'Electric' ? 'km/kWh' : 'km/L'}
+                        </span>
                       </span>
                       <span className="flex items-center gap-1">
                         <Gauge className="h-3 w-3 text-slate-400" />
-                        <span className="font-medium tabular-nums">{v.fuelTankCapacity} {v.fuelType === 'Electric' ? 'kWh' : 'L'}</span>
+                        <span className="font-medium tabular-nums">
+                          {v.fuelTankCapacity} {v.fuelType === 'Electric' ? 'kWh' : 'L'}
+                        </span>
                       </span>
                     </div>
                   </div>
@@ -284,7 +309,8 @@ export default function VehicleListPage() {
                 </div>
                 <h3 className="mt-3 text-sm font-semibold text-slate-900">No matching vehicles</h3>
                 <p className="mt-1 text-xs text-content-muted max-w-sm mx-auto">
-                  No vehicles found matching "{query}". Try adjusting your search query or fuel type filter.
+                  No vehicles found matching "{query}". Try adjusting your search query or fuel type
+                  filter.
                 </p>
                 <div className="mt-4">
                   <Button
